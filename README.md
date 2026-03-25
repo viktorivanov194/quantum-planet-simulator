@@ -83,10 +83,3 @@ This repository currently contains a working architecture skeleton only.
 - Domain schemas are defined with Pydantic
 - Quantum, chemistry, validation, and spectrum logic are still placeholder implementations
 
-## Suggested Next Steps
-
-1. Implement rule-based planet generation and validation
-2. Add chemistry candidate selection heuristics
-3. Build a cache-first minimal Qiskit evaluation path
-4. Replace the placeholder spectrum generator with a lightweight heuristic model
-5. Add a report assembler and persistent local storage
