@@ -65,21 +65,3 @@ uvicorn app.main:app --app-dir backend --reload
 streamlit run frontend/app.py
 ```
 
-## API Endpoints
-
-- `POST /api/v1/planet/generate`
-- `POST /api/v1/planet/validate`
-- `POST /api/v1/chemistry/candidates`
-- `POST /api/v1/quantum/evaluate`
-- `POST /api/v1/spectrum/generate`
-- `POST /api/v1/simulation/run`
-
-## Current State
-
-This repository currently contains a working architecture skeleton only.
-
-- FastAPI routes are connected to placeholder services
-- Streamlit renders the end-to-end demo flow
-- Domain schemas are defined with Pydantic
-- Quantum, chemistry, validation, and spectrum logic are still placeholder implementations
-
