@@ -1,0 +1,122 @@
+{
+  "CH4": {
+    "confidence_score": 0.76,
+    "formula": "CH4",
+    "ground_state_energy_proxy": -1.21,
+    "metadata": {
+      "method": "precomputed_demo_proxy",
+      "mode": "cached_only"
+    },
+    "name": "Methane",
+    "notes": "Precomputed lightweight proxy result for the hackathon demo.",
+    "stability_score": 0.7
+  },
+  "CO": {
+    "confidence_score": 0.8,
+    "formula": "CO",
+    "ground_state_energy_proxy": -1.29,
+    "metadata": {
+      "method": "precomputed_demo_proxy",
+      "mode": "cached_only"
+    },
+    "name": "Carbon Monoxide",
+    "notes": "Precomputed lightweight proxy result for the hackathon demo.",
+    "stability_score": 0.79
+  },
+  "CO2": {
+    "confidence_score": 0.86,
+    "formula": "CO2",
+    "ground_state_energy_proxy": -1.66,
+    "metadata": {
+      "method": "precomputed_demo_proxy",
+      "mode": "cached_only"
+    },
+    "name": "Carbon Dioxide",
+    "notes": "Precomputed lightweight proxy result for the hackathon demo.",
+    "stability_score": 0.87
+  },
+  "H2": {
+    "confidence_score": 0.84,
+    "formula": "H2",
+    "ground_state_energy_proxy": -1.05,
+    "metadata": {
+      "method": "precomputed_demo_proxy",
+      "mode": "cached_only"
+    },
+    "name": "Hydrogen",
+    "notes": "Precomputed lightweight proxy result for the hackathon demo.",
+    "stability_score": 0.81
+  },
+  "H2O": {
+    "confidence_score": 0.85,
+    "formula": "H2O",
+    "ground_state_energy_proxy": -1.58,
+    "metadata": {
+      "method": "precomputed_demo_proxy",
+      "mode": "cached_only"
+    },
+    "name": "Water Vapor",
+    "notes": "Precomputed lightweight proxy result for the hackathon demo.",
+    "stability_score": 0.83
+  },
+  "HCN": {
+    "confidence_score": 0.67,
+    "formula": "HCN",
+    "ground_state_energy_proxy": -1.18,
+    "metadata": {
+      "method": "precomputed_demo_proxy",
+      "mode": "cached_only"
+    },
+    "name": "Hydrogen Cyanide",
+    "notes": "Precomputed lightweight proxy result for the hackathon demo.",
+    "stability_score": 0.61
+  },
+  "N2": {
+    "confidence_score": 0.85,
+    "formula": "N2",
+    "ground_state_energy_proxy": -1.48,
+    "metadata": {
+      "method": "precomputed_demo_proxy",
+      "mode": "cached_only"
+    },
+    "name": "Nitrogen",
+    "notes": "Precomputed lightweight proxy result for the hackathon demo.",
+    "stability_score": 0.84
+  },
+  "NH3": {
+    "confidence_score": 0.72,
+    "formula": "NH3",
+    "ground_state_energy_proxy": -1.09,
+    "metadata": {
+      "method": "precomputed_demo_proxy",
+      "mode": "cached_only"
+    },
+    "name": "Ammonia",
+    "notes": "Precomputed lightweight proxy result for the hackathon demo.",
+    "stability_score": 0.66
+  },
+  "O2": {
+    "confidence_score": 0.79,
+    "formula": "O2",
+    "ground_state_energy_proxy": -1.32,
+    "metadata": {
+      "method": "precomputed_demo_proxy",
+      "mode": "cached_only"
+    },
+    "name": "Oxygen",
+    "notes": "Precomputed lightweight proxy result for the hackathon demo.",
+    "stability_score": 0.76
+  },
+  "SO2": {
+    "confidence_score": 0.74,
+    "formula": "SO2",
+    "ground_state_energy_proxy": -1.42,
+    "metadata": {
+      "method": "precomputed_demo_proxy",
+      "mode": "cached_only"
+    },
+    "name": "Sulfur Dioxide",
+    "notes": "Precomputed lightweight proxy result for the hackathon demo.",
+    "stability_score": 0.73
+  }
+}

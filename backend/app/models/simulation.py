@@ -1,0 +1,41 @@
+from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+from app.models.chemistry import CandidateResponse, QuantumCandidateInput
+from app.models.planet import AtmosphericProfileInput, PlanetProfile, ValidationResult
+from app.models.quantum import QuantumEvaluationResult
+from app.models.report import FinalDiscoveryReport
+from app.models.scientific import ScientificProxyProfile, VisualPhysicsProfile
+from app.models.spectrum import SpectrumResponse
+
+
+class SimulationRunRequest(BaseModel):
+    generation_mode: str = Field(default="auto")
+    star_type: str = Field(default="K-type")
+    orbit_zone: str = Field(default="temperate")
+    seed: int | None = Field(default=None)
+    preset_name: str | None = Field(default=None)
+    planet_name: str | None = Field(default=None)
+    radius_rearth: float | None = Field(default=None, ge=0.0)
+    mass_mearth: float | None = Field(default=None, ge=0.0)
+    gravity_ms2: float | None = Field(default=None, ge=0.0)
+    equilibrium_temperature_k: float | None = Field(default=None, ge=0.0)
+    radiation_level: float | None = Field(default=None, ge=0.0)
+    atmosphere: AtmosphericProfileInput | None = Field(default=None)
+    max_candidates: int = Field(default=3, ge=1, le=10)
+    selected_candidate: str | None = Field(default=None)
+    quantum_runtime_mode: str = Field(default="demo_balanced")
+
+
+class SimulationRunResponse(BaseModel):
+    profile: PlanetProfile
+    validation: ValidationResult
+    chemistry: CandidateResponse
+    selected_candidate: QuantumCandidateInput | None = None
+    quantum: QuantumEvaluationResult | None = None
+    spectrum: SpectrumResponse | None = None
+    scientific_proxy_profile: ScientificProxyProfile
+    visual_physics_profile: VisualPhysicsProfile
+    report_summary: str = Field(default="")
+    final_report: FinalDiscoveryReport | None = None

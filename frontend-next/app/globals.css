@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#__next {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-space-shell text-slate-100 antialiased;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(91, 192, 255, 0.12), transparent 26%),
+    radial-gradient(circle at 20% 18%, rgba(132, 94, 247, 0.08), transparent 22%),
+    radial-gradient(circle at 82% 12%, rgba(255, 188, 110, 0.09), transparent 18%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-panel {
+  @apply rounded-3xl border border-white/10 bg-white/5 shadow-panel backdrop-blur-xl;
+}
+
+.glass-stage {
+  @apply relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] shadow-panel backdrop-blur-2xl;
+}
+
+.glass-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(125, 211, 252, 0.14), transparent 30%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.05), transparent 45%);
+  pointer-events: none;
+}
+
+.panel-grid {
+  @apply grid gap-5 lg:grid-cols-2;
+}
+
+.metric-chip {
+  @apply rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs uppercase tracking-[0.24em] text-slate-200;
+}
+
+.progress-rail {
+  @apply h-2 overflow-hidden rounded-full bg-white/10;
+}
+
+.progress-fill {
+  @apply h-full rounded-full bg-gradient-to-r from-sky-300 via-cyan-300 to-amber-200 shadow-glow;
+}
+
+.orbit-grid {
+  background-image:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.06) 0, transparent 55%),
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 44px 44px, 44px 44px;
+}
+
+.overlay-shell {
+  @apply rounded-[1.75rem] border border-white/10 bg-black/30 shadow-panel backdrop-blur-2xl;
+}
+
+.overlay-copy {
+  @apply text-sm leading-7 text-slate-300 sm:text-base;
+}
+
+.hud-pill {
+  @apply rounded-full border border-white/10 bg-black/30 px-4 py-2 text-[11px] uppercase tracking-[0.24em] text-slate-200 backdrop-blur-xl;
+}
+
+.preset-pill {
+  @apply rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300 backdrop-blur-xl transition;
+}
+
+.preset-pill-active {
+  @apply border-sky-300/45 bg-sky-300/10 text-white shadow-glow;
+}
+
+.quality-pill {
+  @apply rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.24em] text-slate-300 transition;
+}
+
+.quality-pill-active {
+  @apply border-white/20 bg-white/10 text-white;
+}
+
+.floating-chip {
+  @apply rounded-full border border-white/10 bg-black/35 px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-100 backdrop-blur-xl shadow-panel;
+}
+
+.floating-chip-selected {
+  @apply border-sky-300/40 bg-sky-300/10 text-white shadow-glow;
+}
+
+.analysis-ring {
+  @apply absolute left-1/2 top-1/2 rounded-full border border-sky-300/20;
+  transform: translate(-50%, -50%);
+}
+
+.section-kicker {
+  @apply mb-3 text-xs uppercase tracking-[0.25em] text-sky-200/70;
+}
+
+.section-heading {
+  @apply text-3xl font-semibold tracking-tight text-white sm:text-4xl;
+}
+
+.section-copy {
+  @apply text-sm leading-7 text-slate-300 sm:text-base;
+}
