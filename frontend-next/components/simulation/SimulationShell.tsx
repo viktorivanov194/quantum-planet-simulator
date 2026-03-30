@@ -24,12 +24,12 @@ import {
 
 const stageOrder: StageId[] = stageDefinitions.map((stage) => stage.id);
 const STAGE_REVEAL_DURATION_MS: Record<StageId, number> = {
-  "planet-birth": 3200,
-  "atmospheric-validation": 2100,
-  "chemistry-emergence": 2100,
-  "quantum-evaluation": 2200,
-  "spectrum-reveal": 2200,
-  "final-discovery": 1200,
+  "planet-birth": 4200,
+  "atmospheric-validation": 3000,
+  "chemistry-emergence": 3000,
+  "quantum-evaluation": 3400,
+  "spectrum-reveal": 4100,
+  "final-discovery": 2800,
 };
 const DEFAULT_BUILDER_CONFIG: BuilderConfig = {
   star_type: "K-type",
@@ -164,7 +164,7 @@ export function SimulationShell() {
         setPresentationStage(stage.id);
         const stageDuration = STAGE_REVEAL_DURATION_MS[stage.id];
         const perMessageDelay = Math.max(180, Math.round(stageDuration / (stage.messages.length + 0.75)));
-        const tailDelay = Math.max(120, stageDuration - perMessageDelay * stage.messages.length);
+        const tailDelay = Math.max(180, stageDuration - perMessageDelay * stage.messages.length);
         for (let index = 0; index < stage.messages.length; index += 1) {
           if (cancelled) {
             return;
@@ -730,17 +730,32 @@ function ResultOverlay({
                   tone === "critical" ? "border-rose-300/25" : tone === "watch" ? "border-amber-300/25" : "border-sky-300/20"
                 ].join(" ")}
               >
-                <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.06)_45%,transparent_70%)] animate-sheen" />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_26%,transparent_72%,rgba(255,255,255,0.02))]" />
                 <div className="relative">
                   <div className="section-kicker">Final Discovery</div>
-                  <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                  <motion.h2
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.62 }}
+                    className="text-2xl font-semibold tracking-tight text-white sm:text-3xl"
+                  >
                     {result.final_report?.discovery_headline ?? "Discovery report available from the backend pipeline."}
-                  </h2>
-                  <p className="overlay-copy mt-4">
+                  </motion.h2>
+                  <motion.p
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.54, delay: 0.42 }}
+                    className="overlay-copy mt-4"
+                  >
                     {result.final_report?.discovery_summary ??
                       "The cinematic shell is connected. The backend already returns a final narrative report that can power the rest of the reveal."}
-                  </p>
-                  <div className="mt-5 flex flex-wrap gap-2">
+                  </motion.p>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, delay: 0.72 }}
+                    className="mt-5 flex flex-wrap gap-2"
+                  >
                     <span className="hud-pill">{result.profile.planet_name}</span>
                     <span className="hud-pill">{result.quantum?.formula ?? "N/A"}</span>
                     <span className="hud-pill">Confidence {(confidence * 100).toFixed(0)}%</span>
@@ -758,8 +773,13 @@ function ResultOverlay({
                     >
                       Quantum {quantumSource}
                     </span>
-                  </div>
-                  <div className="mt-5 space-y-3">
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 1.0 }}
+                    className="mt-5 space-y-3"
+                  >
                     {(result.final_report?.key_highlights ?? []).slice(0, 3).map((highlight) => (
                       <div
                         key={highlight}
@@ -768,8 +788,13 @@ function ResultOverlay({
                         {highlight}
                       </div>
                     ))}
-                  </div>
-                  <div className="mt-5 flex items-center justify-between gap-4">
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 1.24 }}
+                    className="mt-5 flex items-center justify-between gap-4"
+                  >
                     <div>
                       <div className="text-[11px] uppercase tracking-[0.24em] text-sky-200/70">Novelty Tagline</div>
                       <div className="mt-2 text-lg font-medium text-white">
@@ -780,14 +805,19 @@ function ResultOverlay({
                       <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Selected Signal</div>
                       <div className="mt-2 text-3xl font-semibold text-white">{result.quantum?.formula ?? "N/A"}</div>
                     </div>
-                  </div>
-                  <div className="mt-4 grid gap-2">
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 1.48 }}
+                    className="mt-4 grid gap-2"
+                  >
                     {disclaimers.map((disclaimer) => (
                       <div key={disclaimer} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-xs leading-6 text-slate-400">
                         {disclaimer}
                       </div>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               </motion.section>
             ) : null}
@@ -970,32 +1000,42 @@ function PlanetBirthOverlay({
   ].slice(0, Math.max(1, revealCount));
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="pointer-events-none absolute left-1/2 top-[20%] hidden w-[min(540px,calc(100vw-4rem))] -translate-x-1/2 lg:block"
-    >
-      <div
-        className="rounded-[2rem] border border-white/10 bg-black/28 px-6 py-5 text-center backdrop-blur-xl"
-        style={{ boxShadow: `0 0 32px ${hexToRgba(visual.host_star_light_color, 0.12)}` }}
+    <div className="pointer-events-none absolute inset-0 hidden lg:block">
+      <motion.div
+        className="absolute left-1/2 top-1/2 h-[26rem] w-20 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[48px]"
+        style={{ background: `linear-gradient(180deg, transparent 0%, ${hexToRgba(visual.host_star_light_color, 0.46)} 50%, transparent 100%)` }}
+        initial={{ opacity: 0, x: "-120%" }}
+        animate={{ opacity: [0, 0.9, 0], x: ["-180%", "0%", "180%"] }}
+        transition={{ duration: 2.6, ease: "easeInOut" }}
+      />
+      <motion.section
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="absolute left-1/2 top-[18%] w-[min(560px,calc(100vw-4rem))] -translate-x-1/2"
       >
-        <div className="section-kicker">Planet Initialization</div>
-        <div className="mt-2 text-3xl font-semibold tracking-tight text-white">Worldframe Stabilizing</div>
-        <div className="mt-5 space-y-2">
-          {items.map((item, index) => (
-            <motion.div
-              key={item}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.08 }}
-              className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 text-sm text-slate-200"
-            >
-              {item}
-            </motion.div>
-          ))}
+        <div
+          className="rounded-[2rem] border border-white/10 bg-black/28 px-6 py-5 text-center backdrop-blur-xl"
+          style={{ boxShadow: `0 0 32px ${hexToRgba(visual.host_star_light_color, 0.12)}` }}
+        >
+          <div className="section-kicker">Planet Initialization</div>
+          <div className="mt-2 text-3xl font-semibold tracking-tight text-white">Worldframe Stabilizing</div>
+          <div className="mt-2 text-sm uppercase tracking-[0.28em] text-slate-400">From dark mass to viable world</div>
+          <div className="mt-5 space-y-2">
+            {items.map((item, index) => (
+              <motion.div
+                key={item}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.08 }}
+                className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 text-sm text-slate-200"
+              >
+                {item}
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
-    </motion.section>
+      </motion.section>
+    </div>
   );
 }
 
@@ -1076,50 +1116,87 @@ function AtmosphereOverlay({ result, revealCount }: { result: SimulationResponse
   const observationMode = scientific.observation_confidence_mode.replace("-", " ");
 
   return (
-    <motion.section
-      initial={{ opacity: 0, x: -24 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="pointer-events-auto absolute left-6 top-[22%] hidden w-[272px] lg:block"
-    >
-      <div
-        className={[
-          "overlay-shell p-5",
-          tone === "critical" ? "border-rose-300/25" : tone === "watch" ? "border-amber-300/25" : "border-sky-300/20"
-        ].join(" ")}
-      >
-        <div className="section-kicker">Atmospheric Validation</div>
-        <div className="text-xl font-semibold text-white">Composition Envelope</div>
-        <div className="mt-5 grid place-items-center">
-          <div
-            className="relative grid place-items-center rounded-full bg-black/30"
-            style={{
-              width: `${136 + visual.atmosphere_thickness_visual * 44}px`,
-              height: `${136 + visual.atmosphere_thickness_visual * 44}px`,
-              border: `1px solid ${hexToRgba(visual.atmosphere_glow_color, 0.28)}`,
-              boxShadow: `0 0 ${18 + visual.haze_intensity * 26}px ${hexToRgba(visual.atmosphere_glow_color, 0.22)}`
+    <div className="pointer-events-none absolute inset-0 hidden lg:block">
+      <motion.div
+        className="analysis-ring h-[360px] w-[360px]"
+        style={{ borderColor: hexToRgba(visual.atmosphere_glow_color, 0.22), opacity: 0.7 }}
+        initial={{ scale: 0.68, opacity: 0 }}
+        animate={{ scale: 1, opacity: 0.7 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      />
+      <motion.div
+        className="analysis-ring h-[430px] w-[430px]"
+        style={{ borderColor: hexToRgba(visual.atmosphere_glow_color, 0.12), opacity: 0.45 }}
+        initial={{ scale: 0.74, opacity: 0 }}
+        animate={{ scale: 1, opacity: 0.45 }}
+        transition={{ duration: 1.1, ease: "easeOut" }}
+      />
+      {gases.slice(0, Math.max(1, revealCount)).map(([gas, fraction], index) => {
+        const angle = -70 + index * 52;
+        return (
+          <motion.div
+            key={gas}
+            className="absolute left-1/2 top-1/2"
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              x: Math.cos((angle * Math.PI) / 180) * 210,
+              y: Math.sin((angle * Math.PI) / 180) * 150,
             }}
+            transition={{ delay: index * 0.12, duration: 0.55 }}
           >
+            <div className="floating-chip pointer-events-auto">
+              {gas} {(fraction * 100).toFixed(0)}%
+            </div>
+          </motion.div>
+        );
+      })}
+      <motion.section
+        initial={{ opacity: 0, x: -24 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="pointer-events-auto absolute left-6 top-[22%] w-[272px]"
+      >
+        <div
+          className={[
+            "overlay-shell p-5",
+            tone === "critical" ? "border-rose-300/25" : tone === "watch" ? "border-amber-300/25" : "border-sky-300/20"
+          ].join(" ")}
+        >
+          <div className="section-kicker">Atmospheric Validation</div>
+          <div className="text-xl font-semibold text-white">Composition Envelope</div>
+          <div className="mt-2 text-xs uppercase tracking-[0.25em] text-slate-500">Layering viability around the world</div>
+          <div className="mt-5 grid place-items-center">
             <div
-              className="absolute inset-3 rounded-full"
+              className="relative grid place-items-center rounded-full bg-black/30"
               style={{
-                background: `conic-gradient(${visual.atmosphere_glow_color} 0 ${gasSpan(gases, 0)}deg, #fbbf24 ${gasSpan(
-                  gases,
-                  0
-                )}deg ${gasSpan(gases, 1)}deg, #86efac ${gasSpan(gases, 1)}deg ${gasSpan(
-                  gases,
-                  2
-                )}deg, #c4b5fd ${gasSpan(gases, 2)}deg 360deg)`
+                width: `${136 + visual.atmosphere_thickness_visual * 44}px`,
+                height: `${136 + visual.atmosphere_thickness_visual * 44}px`,
+                border: `1px solid ${hexToRgba(visual.atmosphere_glow_color, 0.28)}`,
+                boxShadow: `0 0 ${18 + visual.haze_intensity * 26}px ${hexToRgba(visual.atmosphere_glow_color, 0.22)}`
               }}
-            />
-            <div className="absolute inset-7 rounded-full bg-slate-950/95" />
-            <div className="relative text-center">
-              <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Visibility</div>
-              <div className="mt-1 text-2xl font-semibold text-white">
-                {(scientific.spectral_visibility_score * 100).toFixed(0)}%
+            >
+              <div
+                className="absolute inset-3 rounded-full"
+                style={{
+                  background: `conic-gradient(${visual.atmosphere_glow_color} 0 ${gasSpan(gases, 0)}deg, #fbbf24 ${gasSpan(
+                    gases,
+                    0
+                  )}deg ${gasSpan(gases, 1)}deg, #86efac ${gasSpan(gases, 1)}deg ${gasSpan(
+                    gases,
+                    2
+                  )}deg, #c4b5fd ${gasSpan(gases, 2)}deg 360deg)`
+                }}
+              />
+              <div className="absolute inset-7 rounded-full bg-slate-950/95" />
+              <div className="relative text-center">
+                <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Visibility</div>
+                <div className="mt-1 text-2xl font-semibold text-white">
+                  {(scientific.spectral_visibility_score * 100).toFixed(0)}%
+                </div>
               </div>
             </div>
           </div>
-        </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <span className="hud-pill">Scale {scientific.scale_height_proxy.toFixed(2)}x</span>
           <span className="hud-pill">Haze {(scientific.cloud_haze_factor * 100).toFixed(0)}%</span>
@@ -1157,8 +1234,9 @@ function AtmosphereOverlay({ result, revealCount }: { result: SimulationResponse
             {scientific.observation_risk_notes[0]}
           </div>
         ) : null}
-      </div>
-    </motion.section>
+        </div>
+      </motion.section>
+    </div>
   );
 }
 
@@ -1183,11 +1261,11 @@ function ChemistryOrbitOverlay({ result, revealCount }: { result: SimulationResp
           key={candidate.formula}
           initial={{ opacity: 0, scale: 0.88, y: 12 }}
           animate={{
-            opacity: 1,
-            scale: selected.has(candidate.formula) && revealCount >= 3 ? 1.08 : 1,
+            opacity: lockedFormula && lockedFormula !== candidate.formula && revealCount >= 3 ? 0.34 : 1,
+            scale: selected.has(candidate.formula) && revealCount >= 3 ? 1.12 : lockedFormula && lockedFormula !== candidate.formula && revealCount >= 3 ? 0.92 : 1,
             y: [0, -4 - visual.cloud_motion_speed * 10, 0]
           }}
-          transition={{ delay: 0.1 * index, duration: 3.2 + index * 0.35, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ delay: 0.14 * index, duration: 3.6 + index * 0.4, repeat: Infinity, ease: "easeInOut" }}
           className={["absolute", placements[index] ?? "left-1/2 top-1/2"].join(" ")}
         >
           <div
@@ -1207,6 +1285,18 @@ function ChemistryOrbitOverlay({ result, revealCount }: { result: SimulationResp
           </div>
         </motion.div>
       ))}
+      {lockedFormula && revealCount >= 3 ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.86 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="absolute left-1/2 top-1/2"
+        >
+          <div
+            className="h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/15"
+            style={{ boxShadow: `0 0 30px ${hexToRgba(visual.atmosphere_glow_color, 0.24)}` }}
+          />
+        </motion.div>
+      ) : null}
       <div className="pointer-events-auto absolute right-6 top-[56%] hidden w-[248px] xl:block">
         <div className="overlay-shell p-4">
           <div className="section-kicker">Chemistry State</div>
@@ -1241,24 +1331,33 @@ function QuantumChamberOverlay({
 
   return (
     <div className="pointer-events-none absolute inset-0 hidden lg:block">
+      <div
+        className="absolute inset-[16%] rounded-[2.5rem] border border-white/6 opacity-35"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
+          backgroundSize: "32px 32px, 32px 32px",
+          boxShadow: `inset 0 0 36px ${hexToRgba(sourceTone, 0.08)}`
+        }}
+      />
       <motion.div
         className="absolute left-1/2 top-1/2 h-[8rem] w-[8rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[55px]"
         style={{ backgroundColor: hexToRgba(sourceHalo, 0.16 + visual.quantum_chamber_intensity * 0.08) }}
-        animate={{ scale: [1, 1.12, 1], opacity: [0.55, 0.82, 0.55] }}
-        transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ scale: [1, 1.16, 1], opacity: [0.5, 0.88, 0.5] }}
+        transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut" }}
       />
       <div className="analysis-ring h-[360px] w-[360px] opacity-60" style={{ borderColor: hexToRgba(sourceTone, 0.35), boxShadow: `0 0 24px ${hexToRgba(sourceTone, 0.2)}` }} />
       <motion.div
         className="analysis-ring h-[430px] w-[430px] opacity-35"
         style={{ borderColor: hexToRgba(sourceTone, 0.28) }}
         animate={{ rotate: 360 }}
-        transition={{ duration: 30 - visual.quantum_ring_speed * 12, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 36 - visual.quantum_ring_speed * 10, repeat: Infinity, ease: "linear" }}
       />
       <motion.div
         className="analysis-ring h-[520px] w-[520px] opacity-20"
         style={{ borderColor: hexToRgba(sourceTone, 0.18) }}
         animate={{ rotate: -360 }}
-        transition={{ duration: 38 - visual.quantum_ring_speed * 14, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 44 - visual.quantum_ring_speed * 12, repeat: Infinity, ease: "linear" }}
       />
       <motion.div
         className="analysis-ring h-[310px] w-[310px] opacity-45"
@@ -1274,23 +1373,30 @@ function QuantumChamberOverlay({
         <div
           className="overlay-shell p-5 text-center"
           style={{
-            boxShadow: `0 0 ${26 + visual.quantum_chamber_intensity * 30}px ${hexToRgba(sourceTone, cinematicGlow ? 0.28 : 0.22)}`
+            boxShadow: `0 0 ${32 + visual.quantum_chamber_intensity * 34}px ${hexToRgba(sourceTone, cinematicGlow ? 0.32 : 0.24)}`
           }}
         >
           <div className="section-kicker">Quantum Evaluation</div>
           <div className="text-5xl font-semibold tracking-tight text-white">{result.quantum?.formula ?? "N/A"}</div>
-          <div
-            className={[
-              "mx-auto mt-3 inline-flex rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.24em]",
-              source === "live"
-                ? "bg-emerald-300/14 text-emerald-100"
-                : source === "cached"
-                  ? "bg-sky-300/14 text-sky-100"
-                  : "bg-amber-300/14 text-amber-100"
-            ].join(" ")}
-          >
-            {source} source
-          </div>
+          {revealCount >= 1 ? (
+            <div
+              className={[
+                "mx-auto mt-3 inline-flex rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.24em]",
+                source === "live"
+                  ? "bg-emerald-300/14 text-emerald-100"
+                  : source === "cached"
+                    ? "bg-sky-300/14 text-sky-100"
+                    : "bg-amber-300/14 text-amber-100"
+              ].join(" ")}
+            >
+              {source} source
+            </div>
+          ) : null}
+          {revealCount >= 1 ? (
+            <div className="mt-3 text-[11px] uppercase tracking-[0.22em] text-slate-400">
+              {source === "live" ? "Live local quantum path" : source === "cached" ? "Reliable cached evaluation" : "Fallback proxy stabilization"}
+            </div>
+          ) : null}
           <div className="mt-5 space-y-4 text-left">
             {revealCount >= 1 ? <GaugeBar label="Stability" value={stability} accent={sourceTone} /> : null}
             {revealCount >= 2 ? <GaugeBar label="Confidence" value={confidence} accent={sourceTone} /> : null}
@@ -1345,99 +1451,121 @@ function SpectrumOverlay({
   const area = `0,${height} ${points} ${width},${height}`;
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="pointer-events-auto absolute bottom-5 left-1/2 w-[min(920px,calc(100vw-2rem))] -translate-x-1/2"
-    >
-      <div
-        className="overlay-shell overflow-hidden border-sky-300/15 bg-black/40 p-5"
-        style={cinematicGlow ? { boxShadow: `0 0 34px ${hexToRgba(visual.spectrum_accent_palette[0] ?? "#7dd3fc", 0.12)}` } : undefined}
+    <div className="pointer-events-none absolute inset-0 hidden lg:block">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_48%,rgba(2,6,23,0.02),rgba(2,6,23,0.58)_56%,rgba(2,6,23,0.84)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,11,24,0.08),rgba(6,11,24,0.28)_35%,rgba(6,11,24,0.54)_100%)]" />
+      <motion.div
+        className="absolute inset-y-[14%] left-[-14%] w-[20%] rounded-[3rem] bg-[linear-gradient(90deg,transparent_0%,rgba(125,211,252,0.18)_55%,transparent_100%)] blur-[7px]"
+        initial={{ x: "-15%" }}
+        animate={{ x: "720%" }}
+        transition={{ duration: 3.2, ease: "easeInOut" }}
+      />
+      <motion.section
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="pointer-events-auto absolute bottom-5 left-1/2 w-[min(920px,calc(100vw-2rem))] -translate-x-1/2"
       >
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(103,211,255,0.05),transparent_25%,transparent_70%,rgba(2,6,23,0.24))]" />
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="section-kicker">Spectrum Reveal</div>
-            <div className="text-2xl font-semibold text-white">Transmission Scan</div>
-            <div className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
-              {result.spectrum.summary_text}
+        <div
+          className="overlay-shell overflow-hidden border-sky-300/15 bg-black/40 p-5"
+          style={cinematicGlow ? { boxShadow: `0 0 42px ${hexToRgba(visual.spectrum_accent_palette[0] ?? "#7dd3fc", 0.15)}` } : undefined}
+        >
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(103,211,255,0.05),transparent_25%,transparent_70%,rgba(2,6,23,0.24))]" />
+          <div className="relative">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="section-kicker">Spectrum Reveal</div>
+                <div className="text-2xl font-semibold text-white">Transmission Scan</div>
+                <div className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
+                  {result.spectrum.summary_text}
+                </div>
+              </div>
+              <div className="hidden flex-wrap gap-2 lg:flex">
+                <span className="floating-chip">{clarityLabel}</span>
+                <span className="floating-chip">{observationLabel}</span>
+                {result.spectrum.highlighted_features.slice(0, 3).map((feature) => (
+                  <span key={`${feature.label}-${feature.wavelength_um}`} className="floating-chip">
+                    {feature.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="relative mt-5 rounded-[1.5rem] border border-white/10 bg-black/35 p-4">
+              <motion.div
+                className="pointer-events-none absolute inset-y-4 top-4 w-[12%] rounded-[1rem] bg-[linear-gradient(90deg,transparent_0%,rgba(125,211,252,0.08)_50%,transparent_100%)]"
+                initial={{ x: "-25%" }}
+                animate={{ x: "820%" }}
+                transition={{ duration: 2.9, ease: "easeInOut" }}
+              />
+              <div className="mb-3 h-0.5 overflow-hidden rounded-full bg-white/10">
+                <motion.div
+                  className="h-full"
+                  style={{
+                    background: `linear-gradient(90deg, transparent, ${visual.spectrum_accent_palette[0] ?? "#7dd3fc"}, transparent)`
+                  }}
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "220%" }}
+                  transition={{ duration: 1.4, ease: "easeInOut" }}
+                />
+              </div>
+              <div className="overflow-hidden" style={{ width: revealWidth }}>
+                <svg viewBox={`0 0 ${width} ${height}`} className="h-[180px] w-full min-w-[760px]">
+                  <defs>
+                    <linearGradient id="spectrumStroke" x1="0%" x2="100%">
+                      <stop offset="0%" stopColor={visual.spectrum_accent_palette[0] ?? "#7dd3fc"} />
+                      <stop offset="50%" stopColor={visual.spectrum_accent_palette[1] ?? "#fef08a"} />
+                      <stop offset="100%" stopColor={visual.spectrum_accent_palette[2] ?? "#c4b5fd"} />
+                    </linearGradient>
+                    <linearGradient id="spectrumFill" x1="0%" x2="0%" y1="0%" y2="100%">
+                      <stop offset="0%" stopColor={hexToRgba(visual.spectrum_accent_palette[0] ?? "#7dd3fc", 0.35)} />
+                      <stop offset="100%" stopColor={hexToRgba(visual.spectrum_accent_palette[0] ?? "#7dd3fc", 0.02)} />
+                    </linearGradient>
+                  </defs>
+                  {revealCount >= 1 ? <polygon points={area} fill="url(#spectrumFill)" /> : null}
+                  {revealCount >= 1 ? (
+                    <polyline
+                      fill="none"
+                      stroke="url(#spectrumStroke)"
+                      strokeWidth="3"
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                      points={points}
+                    />
+                  ) : null}
+                  {result.spectrum.highlighted_features.slice(0, Math.max(0, Math.min(4, revealCount))).map((feature, featureIndex) => {
+                    const idx = nearestIndex(wavelengths, feature.wavelength_um);
+                    const x = (idx / Math.max(values.length - 1, 1)) * width;
+                    const normalized = (values[idx] - min) / Math.max(max - min, 0.0001);
+                    const y = height - normalized * 110 - 24;
+
+                    return (
+                      <motion.g
+                        key={`${feature.label}-${feature.wavelength_um}`}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: featureIndex * 0.22, duration: 0.42 }}
+                      >
+                        <line x1={x} y1={height - 10} x2={x} y2={y - 8} stroke="rgba(255,255,255,0.24)" strokeDasharray="4 5" />
+                        <circle cx={x} cy={y} r="5" fill="#f8fafc" />
+                        {revealCount >= featureIndex + 2 ? (
+                          <text x={x + 10} y={y - 12} fill="rgba(226,232,240,0.8)" fontSize="10" letterSpacing="0.18em">
+                            {feature.molecule}
+                          </text>
+                        ) : null}
+                      </motion.g>
+                    );
+                  })}
+                </svg>
+              </div>
+              <div className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                <span>{wavelengths[0]?.toFixed(2)} um</span>
+                <span>Visibility {(scientific.spectral_visibility_score * 100).toFixed(0)}% • {(result.spectrum.metadata.confidence_score ?? 0.8).toFixed(2)}</span>
+                <span>{wavelengths[wavelengths.length - 1]?.toFixed(2)} um</span>
+              </div>
             </div>
           </div>
-          <div className="hidden flex-wrap gap-2 lg:flex">
-            <span className="floating-chip">{clarityLabel}</span>
-            <span className="floating-chip">{observationLabel}</span>
-            {result.spectrum.highlighted_features.slice(0, 3).map((feature) => (
-              <span key={`${feature.label}-${feature.wavelength_um}`} className="floating-chip">
-                {feature.label}
-              </span>
-            ))}
-          </div>
         </div>
-        <div className="relative mt-5 rounded-[1.5rem] border border-white/10 bg-black/35 p-4">
-          <motion.div
-            className="pointer-events-none absolute inset-y-4 top-4 w-[12%] rounded-[1rem] bg-[linear-gradient(90deg,transparent_0%,rgba(125,211,252,0.08)_50%,transparent_100%)]"
-            initial={{ x: "-25%" }}
-            animate={{ x: "820%" }}
-            transition={{ duration: 1.8, ease: "easeInOut" }}
-          />
-          <div className="mb-3 h-0.5 overflow-hidden rounded-full bg-white/10">
-            <motion.div
-              className="h-full"
-              style={{
-                background: `linear-gradient(90deg, transparent, ${visual.spectrum_accent_palette[0] ?? "#7dd3fc"}, transparent)`
-              }}
-              initial={{ x: "-100%" }}
-              animate={{ x: "220%" }}
-              transition={{ duration: 1.4, ease: "easeInOut" }}
-            />
-          </div>
-          <div className="overflow-hidden" style={{ width: revealWidth }}>
-            <svg viewBox={`0 0 ${width} ${height}`} className="h-[180px] w-full min-w-[760px]">
-            <defs>
-              <linearGradient id="spectrumStroke" x1="0%" x2="100%">
-                <stop offset="0%" stopColor={visual.spectrum_accent_palette[0] ?? "#7dd3fc"} />
-                <stop offset="50%" stopColor={visual.spectrum_accent_palette[1] ?? "#fef08a"} />
-                <stop offset="100%" stopColor={visual.spectrum_accent_palette[2] ?? "#c4b5fd"} />
-              </linearGradient>
-              <linearGradient id="spectrumFill" x1="0%" x2="0%" y1="0%" y2="100%">
-                <stop offset="0%" stopColor={hexToRgba(visual.spectrum_accent_palette[0] ?? "#7dd3fc", 0.35)} />
-                <stop offset="100%" stopColor={hexToRgba(visual.spectrum_accent_palette[0] ?? "#7dd3fc", 0.02)} />
-              </linearGradient>
-            </defs>
-            {revealCount >= 1 ? <polygon points={area} fill="url(#spectrumFill)" /> : null}
-            {revealCount >= 1 ? (
-              <polyline
-                fill="none"
-                stroke="url(#spectrumStroke)"
-                strokeWidth="3"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                points={points}
-              />
-            ) : null}
-            {result.spectrum.highlighted_features.slice(0, Math.max(0, Math.min(4, revealCount))).map((feature) => {
-              const idx = nearestIndex(wavelengths, feature.wavelength_um);
-              const x = (idx / Math.max(values.length - 1, 1)) * width;
-              const normalized = (values[idx] - min) / Math.max(max - min, 0.0001);
-              const y = height - normalized * 110 - 24;
-
-              return (
-                <g key={`${feature.label}-${feature.wavelength_um}`}>
-                  <line x1={x} y1={height - 10} x2={x} y2={y - 8} stroke="rgba(255,255,255,0.24)" strokeDasharray="4 5" />
-                  <circle cx={x} cy={y} r="5" fill="#f8fafc" />
-                </g>
-              );
-            })}
-            </svg>
-          </div>
-          <div className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-[0.24em] text-slate-400">
-            <span>{wavelengths[0]?.toFixed(2)} um</span>
-            <span>Visibility {(scientific.spectral_visibility_score * 100).toFixed(0)}% • {(result.spectrum.metadata.confidence_score ?? 0.8).toFixed(2)}</span>
-            <span>{wavelengths[wavelengths.length - 1]?.toFixed(2)} um</span>
-          </div>
-        </div>
-      </div>
-    </motion.section>
+      </motion.section>
+    </div>
   );
 }
 
@@ -1453,6 +1581,19 @@ function DiscoveryStageHalo({ result }: { result: SimulationResponse }) {
         className="absolute left-1/2 top-1/2 h-[36rem] w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px]"
         style={{ backgroundColor: hexToRgba(visual.spectrum_accent_palette[0] ?? visual.atmosphere_glow_color, 0.16) }}
       />
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="absolute left-1/2 top-[14%] w-[min(760px,calc(100vw-4rem))] -translate-x-1/2 text-center"
+      >
+        <div className="section-kicker">Discovery Report</div>
+        <div className="text-4xl font-semibold tracking-tight text-white">
+          {result.final_report?.discovery_headline ?? "Synthetic discovery signal resolved."}
+        </div>
+        <div className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-slate-300">
+          {result.final_report?.novelty_tagline ?? "A cinematic scientific conclusion over a living generated world."}
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

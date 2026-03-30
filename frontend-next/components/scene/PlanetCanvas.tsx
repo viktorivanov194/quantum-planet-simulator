@@ -214,15 +214,30 @@ function CameraRig({
 
   useFrame((_, delta) => {
     const elapsed = clock.getElapsedTime();
-    const drift = isSequenceActive ? 0.72 : 0.26;
+    const drift = isSequenceActive ? 0.9 : 0.28;
     const birthBoost = stage === "planet-birth" ? 1 - progress : 0;
-    const atmosphereBias = stage === "atmospheric-validation" ? 0.1 : 0;
-    const quantumBias = stage === "quantum-evaluation" ? -0.12 : 0;
-    const spectrumBias = stage === "spectrum-reveal" ? 0.05 : 0;
-    const targetZ = distance + birthBoost * 0.34 + atmosphereBias + quantumBias + spectrumBias + Math.sin(elapsed * 0.18) * 0.028 * drift;
-    const targetX = Math.sin(elapsed * 0.09) * (0.08 + atmosphereBias * 0.18) * drift;
-    const targetY = 0.035 + Math.cos(elapsed * 0.14) * (0.055 + spectrumBias * 0.16) * drift;
-    const targetFov = fov + birthBoost * 0.9 + (stage === "quantum-evaluation" ? -0.35 : 0) + Math.sin(elapsed * 0.11) * 0.22 * drift;
+    const atmosphereBias = stage === "atmospheric-validation" ? 0.16 : 0;
+    const chemistryBias = stage === "chemistry-emergence" ? 0.08 : 0;
+    const quantumBias = stage === "quantum-evaluation" ? -0.22 : 0;
+    const spectrumBias = stage === "spectrum-reveal" ? 0.12 : 0;
+    const discoveryBias = stage === "final-discovery" ? 0.18 : 0;
+    const targetZ =
+      distance +
+      birthBoost * 0.62 +
+      atmosphereBias +
+      chemistryBias +
+      quantumBias +
+      spectrumBias +
+      discoveryBias +
+      Math.sin(elapsed * 0.16) * 0.034 * drift;
+    const targetX = Math.sin(elapsed * 0.075) * (0.11 + atmosphereBias * 0.22 + chemistryBias * 0.18) * drift;
+    const targetY = 0.03 + Math.cos(elapsed * 0.12) * (0.072 + spectrumBias * 0.22 + discoveryBias * 0.14) * drift;
+    const targetFov =
+      fov +
+      birthBoost * 1.4 +
+      (stage === "quantum-evaluation" ? -0.8 : 0) +
+      (stage === "final-discovery" ? 0.4 : 0) +
+      Math.sin(elapsed * 0.1) * 0.26 * drift;
     const perspectiveCamera = camera as THREE.PerspectiveCamera;
 
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetX, delta * 1.6);
@@ -232,6 +247,149 @@ function CameraRig({
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
   });
+
+  return null;
+}
+
+function StageFieldOverlays({
+  stage,
+  progress,
+  glowColor,
+  hostStarColor,
+  accent,
+  quantumChamberIntensity,
+}: {
+  stage?: StageId | null;
+  progress: number;
+  glowColor: string;
+  hostStarColor: string;
+  accent: string;
+  quantumChamberIntensity: number;
+}) {
+  if (!stage) {
+    return null;
+  }
+
+  if (stage === "planet-birth") {
+    return (
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(2,6,23,0.12),rgba(2,6,23,0.76)_58%,rgba(2,6,23,0.96)_100%)]" />
+        <motion.div
+          className="absolute left-1/2 top-1/2 h-[34rem] w-24 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[56px]"
+          style={{ background: `linear-gradient(180deg, transparent 0%, ${hexToRgba(hostStarColor, 0.72)} 50%, transparent 100%)` }}
+          initial={{ opacity: 0, x: "-190%" }}
+          animate={{ opacity: [0, 1, 0], x: ["-220%", "0%", "220%"] }}
+          transition={{ duration: 3.8, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[130px]"
+          style={{ backgroundColor: hexToRgba(glowColor, 0.18) }}
+          animate={{ opacity: [0.16, 0.42, 0.24], scale: [0.72, 1.06, 1] }}
+          transition={{ duration: 3.6, ease: "easeInOut" }}
+        />
+      </div>
+    );
+  }
+
+  if (stage === "atmospheric-validation") {
+    return (
+      <div className="pointer-events-none absolute inset-0">
+        <motion.div
+          className="analysis-ring h-[24rem] w-[24rem]"
+          style={{ borderColor: hexToRgba(glowColor, 0.3), opacity: 0.75 }}
+          initial={{ scale: 0.55, opacity: 0 }}
+          animate={{ scale: 0.84 + progress * 0.2, opacity: 0.75 }}
+          transition={{ duration: 1.25, ease: "easeOut" }}
+        />
+        <motion.div
+          className="analysis-ring h-[31rem] w-[31rem]"
+          style={{ borderColor: hexToRgba(glowColor, 0.18), opacity: 0.42 }}
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 0.78 + progress * 0.24, opacity: 0.42 }}
+          transition={{ duration: 1.65, ease: "easeOut" }}
+        />
+        <motion.div
+          className="absolute left-1/2 top-1/2 h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px]"
+          style={{ backgroundColor: hexToRgba(glowColor, 0.12 + progress * 0.08) }}
+          animate={{ opacity: [0.24, 0.38, 0.28], scale: [0.86, 1.02, 1] }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+    );
+  }
+
+  if (stage === "chemistry-emergence") {
+    return (
+      <div className="pointer-events-none absolute inset-0">
+        <motion.div
+          className="analysis-ring h-[23rem] w-[23rem] opacity-40"
+          style={{ borderColor: hexToRgba(glowColor, 0.16), borderStyle: "dashed" }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="analysis-ring h-[29rem] w-[29rem] opacity-24"
+          style={{ borderColor: hexToRgba(accent, 0.18), borderStyle: "dashed" }}
+          animate={{ rotate: -360 }}
+          transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
+    );
+  }
+
+  if (stage === "quantum-evaluation") {
+    return (
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute inset-[12%] rounded-[3rem] border border-white/6"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+            backgroundSize: "40px 40px, 40px 40px",
+          }}
+        />
+        <motion.div
+          className="analysis-ring h-[28rem] w-[28rem] opacity-40"
+          style={{ borderColor: hexToRgba(accent, 0.22) }}
+          animate={{ rotate: 360, scale: [0.98, 1.02, 0.98] }}
+          transition={{ rotate: { duration: 30, repeat: Infinity, ease: "linear" }, scale: { duration: 3.4, repeat: Infinity, ease: "easeInOut" } }}
+        />
+        <motion.div
+          className="absolute left-1/2 top-1/2 h-[22rem] w-[22rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[110px]"
+          style={{ backgroundColor: hexToRgba(accent, 0.12 + quantumChamberIntensity * 0.1) }}
+          animate={{ opacity: [0.18, 0.32, 0.2] }}
+          transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+    );
+  }
+
+  if (stage === "spectrum-reveal") {
+    return (
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_48%,rgba(2,6,23,0.06),rgba(2,6,23,0.62)_58%,rgba(2,6,23,0.88)_100%)]" />
+        <motion.div
+          className="absolute inset-y-[14%] left-[-16%] w-[20%] rounded-[4rem] bg-[linear-gradient(90deg,transparent_0%,rgba(125,211,252,0.18)_55%,transparent_100%)] blur-[8px]"
+          initial={{ x: "-18%" }}
+          animate={{ x: "760%" }}
+          transition={{ duration: 3.2, ease: "easeInOut" }}
+        />
+      </div>
+    );
+  }
+
+  if (stage === "final-discovery") {
+    return (
+      <div className="pointer-events-none absolute inset-0">
+        <motion.div
+          className="absolute left-1/2 top-1/2 h-[38rem] w-[38rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[130px]"
+          style={{ backgroundColor: hexToRgba(accent, 0.18) }}
+          animate={{ opacity: [0.12, 0.22, 0.14] }}
+          transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+    );
+  }
 
   return null;
 }
@@ -408,6 +566,7 @@ function PlanetMesh({
   const upperCloudTexture = useMemo(() => createCloudTexture(cloudOpacity * 0.72), [cloudOpacity]);
   const geometryDetail = qualityMode === "Cinematic" ? 96 : qualityMode === "Balanced" ? 72 : 48;
   const birthProgress = sceneStage === "planet-birth" ? stageProgress : 1;
+  const birthDarkness = sceneStage === "planet-birth" ? 1 - stageProgress : 0;
   const atmosphereProgress =
     sceneStage === "planet-birth"
       ? Math.min(1, 0.25 + stageProgress * 0.45)
@@ -487,7 +646,7 @@ function PlanetMesh({
     if (meshRef.current) {
       meshRef.current.rotation.y += delta * 0.12;
       meshRef.current.rotation.x = Math.sin(meshRef.current.rotation.y * 0.35) * 0.035;
-      meshRef.current.scale.setScalar(0.82 + birthProgress * 0.18);
+      meshRef.current.scale.setScalar(0.58 + birthProgress * 0.42);
     }
     if (shellRef.current) {
       shellRef.current.rotation.y -= delta * (0.006 + cloudMotionSpeed * 0.05 * cloudPhase);
@@ -522,7 +681,9 @@ function PlanetMesh({
       haloRef.current.scale.setScalar(0.96 + chemistryPulse * 0.04 + (1 - birthProgress) * 0.08);
     }
     if (meshRef.current?.material instanceof THREE.MeshStandardMaterial) {
-      meshRef.current.material.emissiveIntensity = 0.06 + atmosphereProgress * 0.05 + chemistryPulse * 0.015;
+      meshRef.current.material.emissiveIntensity = 0.015 + atmosphereProgress * 0.08 + chemistryPulse * 0.03 + birthProgress * 0.02;
+      meshRef.current.material.opacity = 0.42 + birthProgress * 0.58;
+      meshRef.current.material.transparent = true;
     }
   });
 
@@ -599,6 +760,7 @@ export function PlanetCanvas({
   const highRadiation = (props.radiationLevel ?? 0) >= 1.8;
   const chamberGlow = props.quantumChamberIntensity ?? 0.5;
   const accent = props.spectrumAccentPalette?.[0] ?? props.glowColor;
+  const birthDarkness = props.sceneStage === "planet-birth" ? 1 - stageProgress : 0;
 
   return (
     <div className="absolute inset-0">
@@ -649,6 +811,20 @@ export function PlanetCanvas({
           rotateSpeed={0.42}
         />
       </Canvas>
+      <StageFieldOverlays
+        stage={props.sceneStage}
+        progress={stageProgress}
+        glowColor={props.glowColor}
+        hostStarColor={props.hostStarColor}
+        accent={accent}
+        quantumChamberIntensity={chamberGlow}
+      />
+      {props.sceneStage === "planet-birth" ? (
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ backgroundColor: `rgba(2, 6, 23, ${0.62 * birthDarkness})` }}
+        />
+      ) : null}
       <div
         className="pointer-events-none absolute left-1/2 top-[13%] h-44 w-44 -translate-x-1/2 rounded-full opacity-55 blur-[110px]"
         style={{ backgroundColor: props.hostStarColor }}
