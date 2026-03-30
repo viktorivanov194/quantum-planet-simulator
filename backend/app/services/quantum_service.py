@@ -64,7 +64,7 @@ def _evaluate_live_or_fallback(
     cache_path: Path,
 ) -> QuantumEvaluationResult:
     try:
-        live_result = _run_live_proxy_evaluation(candidate)
+        live_result = _ensure_quantum_metadata(_run_live_proxy_evaluation(candidate), source="live")
         _persist_live_result(candidate, live_result, cache, cache_path)
         return live_result
     except Exception as exc:
@@ -90,6 +90,13 @@ def _build_cached_result(candidate: QuantumCandidateInput, cached_entry: dict) -
         source="cached",
         notes=notes,
         confidence_score=float(cached_entry.get("confidence_score", 0.82)),
+        classical_reference_energy_proxy=(
+            float(cached_entry["classical_reference_energy_proxy"])
+            if cached_entry.get("classical_reference_energy_proxy") is not None
+            else float(cached_entry["ground_state_energy_proxy"])
+        ),
+        baseline_agreement_score=float(cached_entry.get("baseline_agreement_score", 0.84)),
+        verification_mode=metadata.get("verification_mode", "cached_reference_proxy"),
     )
 
 
@@ -104,6 +111,9 @@ def _build_fallback_result(candidate: QuantumCandidateInput, reason: str) -> Qua
         source="fallback",
         notes=[reason, "Returned a safe proxy result to keep the demo pipeline stable."],
         confidence_score=0.45,
+        classical_reference_energy_proxy=float(baseline["energy"]),
+        baseline_agreement_score=0.42,
+        verification_mode="fallback_proxy_only",
     )
 
 
@@ -145,6 +155,8 @@ def _run_live_proxy_evaluation(candidate: QuantumCandidateInput) -> QuantumEvalu
     )
     stability_score = _compute_stability_score(exact_energy, candidate.classical_score)
     confidence_score = 0.88 if candidate.formula == "H2" else 0.81
+    delta = abs(exact_energy - expectation)
+    baseline_agreement_score = _compute_baseline_agreement(delta, exact_energy)
 
     return QuantumEvaluationResult(
         name=candidate.name,
@@ -158,6 +170,9 @@ def _run_live_proxy_evaluation(candidate: QuantumCandidateInput) -> QuantumEvalu
             "Used NumPyMinimumEigensolver plus Aer statevector simulation on a 2-qubit proxy Hamiltonian.",
         ],
         confidence_score=confidence_score,
+        classical_reference_energy_proxy=round(exact_energy, 6),
+        baseline_agreement_score=baseline_agreement_score,
+        verification_mode="live_quantum_proxy_vs_classical_exact",
     )
 
 
@@ -165,6 +180,31 @@ def _compute_stability_score(energy: float, classical_score: float) -> float:
     normalized_energy = min(1.0, max(0.0, abs(energy) / 2.0))
     stability = 0.55 * normalized_energy + 0.45 * classical_score
     return round(max(0.0, min(1.0, stability)), 3)
+
+
+def _compute_baseline_agreement(delta: float, reference_energy: float) -> float:
+    relative_delta = delta / max(abs(reference_energy), 0.75)
+    agreement = 1.0 - min(relative_delta, 1.0) * 0.45
+    return round(max(0.55, min(1.0, agreement)), 3)
+
+
+def _ensure_quantum_metadata(
+    result: QuantumEvaluationResult,
+    source: str,
+) -> QuantumEvaluationResult:
+    if result.classical_reference_energy_proxy is None:
+        result.classical_reference_energy_proxy = result.ground_state_energy_proxy
+    if result.baseline_agreement_score is None:
+        result.baseline_agreement_score = 0.86 if source == "live" else 0.84 if source == "cached" else 0.42
+    if result.verification_mode is None:
+        result.verification_mode = (
+            "live_quantum_proxy_vs_classical_exact"
+            if source == "live"
+            else "cached_reference_proxy"
+            if source == "cached"
+            else "fallback_proxy_only"
+        )
+    return result
 
 
 def _pick_selected_result(
@@ -195,10 +235,13 @@ def _persist_live_result(
         "ground_state_energy_proxy": result.ground_state_energy_proxy,
         "stability_score": result.stability_score,
         "confidence_score": result.confidence_score,
+        "classical_reference_energy_proxy": result.classical_reference_energy_proxy,
+        "baseline_agreement_score": result.baseline_agreement_score,
         "notes": "Stored after local live proxy evaluation.",
         "metadata": {
             "method": "qiskit_proxy_solver",
             "mode": "demo_balanced",
+            "verification_mode": result.verification_mode,
         },
     }
     _save_quantum_cache(cache_path, cache)

@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from app.models.chemistry import QuantumCandidateInput
 from app.models.planet import PlanetProfile
 from app.models.quantum import QuantumEvaluationResult
+from app.models.scientific import ScientificProxyProfile
 
 
 class SpectrumRequest(BaseModel):
@@ -12,6 +13,7 @@ class SpectrumRequest(BaseModel):
     chemistry_modes: list[str] = Field(default_factory=list)
     quantum_result: QuantumEvaluationResult | None = None
     chemistry_candidates: list[QuantumCandidateInput] = Field(default_factory=list)
+    scientific_profile: ScientificProxyProfile | None = None
 
 
 class SpectrumPoint(BaseModel):
@@ -32,6 +34,8 @@ class SpectrumMetadata(BaseModel):
     confidence_score: float | None = Field(default=None, ge=0.0, le=1.0)
     generator: str = Field(default="synthetic_signature_blend")
     selected_formula: str | None = None
+    atmospheric_clarity_mode: str = Field(default="clear")
+    observation_confidence_mode: str = Field(default="strong-feature")
 
 
 class SpectrumResponse(BaseModel):

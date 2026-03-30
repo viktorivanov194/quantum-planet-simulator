@@ -31,6 +31,8 @@ def test_cached_lookup_success(tmp_path: Path) -> None:
 
     assert response.results[0].source == "cached"
     assert response.results[0].formula == "CO2"
+    assert response.results[0].verification_mode == "cached_reference_proxy"
+    assert response.results[0].baseline_agreement_score is not None
     assert response.selected_result is not None
 
 
@@ -45,6 +47,7 @@ def test_missing_cache_returns_fallback(tmp_path: Path) -> None:
 
     assert response.results[0].source == "fallback"
     assert "No cache entry found" in response.results[0].notes[0]
+    assert response.results[0].verification_mode == "fallback_proxy_only"
 
 
 def test_demo_balanced_mode_uses_live_path(monkeypatch, tmp_path: Path) -> None:
@@ -72,6 +75,7 @@ def test_demo_balanced_mode_uses_live_path(monkeypatch, tmp_path: Path) -> None:
 
     assert response.results[0].source == "live"
     assert response.live_evaluation_used is True
+    assert response.results[0].verification_mode == "live_quantum_proxy_vs_classical_exact"
 
 
 def test_unsupported_molecule_handling() -> None:
@@ -118,6 +122,9 @@ def test_stable_response_shape(tmp_path: Path) -> None:
     assert hasattr(result, "source")
     assert hasattr(result, "notes")
     assert hasattr(result, "confidence_score")
+    assert hasattr(result, "classical_reference_energy_proxy")
+    assert hasattr(result, "baseline_agreement_score")
+    assert hasattr(result, "verification_mode")
 
 
 def _candidate(name: str, formula: str) -> QuantumCandidateInput:

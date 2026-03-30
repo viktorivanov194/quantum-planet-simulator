@@ -4,6 +4,10 @@ export type PresetKey =
   | "Cold Methane Frontier";
 
 export type QualityMode = "Cinematic" | "Balanced" | "Safe";
+export type ExperienceMode = "presets" | "builder";
+export type BuilderMode = "guided" | "advanced";
+export type BuilderGasKey = "N2" | "O2" | "CO2" | "CH4" | "H2O" | "NH3" | "HCN" | "SO2" | "CO";
+export type RuntimeMode = "cached_only" | "demo_balanced" | "fallback_only";
 
 export type StageId =
   | "planet-birth"
@@ -38,6 +42,24 @@ export interface StageDefinition {
   description: string;
 }
 
+export interface StageExecutionDefinition {
+  id: StageId;
+  messages: string[];
+}
+
+export interface BuilderConfig {
+  star_type: string;
+  orbit_zone: string;
+  radius_rearth: number;
+  mass_mearth: number;
+  equilibrium_temperature_k: number;
+  radiation_level: number;
+  pressure_bar: number;
+  gas_fractions: Record<BuilderGasKey, number>;
+  quantum_runtime_mode: RuntimeMode;
+  seed?: number | null;
+}
+
 export interface QuantumCandidateInput {
   name: string;
   formula: string;
@@ -55,6 +77,9 @@ export interface QuantumEvaluationResult {
   source: "cached" | "live" | "fallback";
   notes: string[];
   confidence_score?: number | null;
+  classical_reference_energy_proxy?: number | null;
+  baseline_agreement_score?: number | null;
+  verification_mode?: string | null;
 }
 
 export interface SpectrumFeature {
@@ -73,6 +98,8 @@ export interface SpectrumResponse {
   metadata: {
     confidence_score?: number | null;
     selected_formula?: string | null;
+    atmospheric_clarity_mode?: string;
+    observation_confidence_mode?: string;
   };
 }
 
@@ -99,6 +126,9 @@ export interface ScientificProxyProfile {
   carbon_richness_proxy: number;
   nitrogen_richness_proxy: number;
   spectral_visibility_score: number;
+  atmospheric_clarity_mode: string;
+  observation_confidence_mode: string;
+  observation_risk_notes: string[];
   scientific_disclaimers: string[];
 }
 

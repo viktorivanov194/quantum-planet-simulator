@@ -11,6 +11,9 @@ class ScientificProxyProfile(BaseModel):
     carbon_richness_proxy: float = Field(default=0.0, ge=0.0, le=1.0)
     nitrogen_richness_proxy: float = Field(default=0.0, ge=0.0, le=1.0)
     spectral_visibility_score: float = Field(default=0.5, ge=0.0, le=1.0)
+    atmospheric_clarity_mode: str = Field(default="clear")
+    observation_confidence_mode: str = Field(default="strong-feature")
+    observation_risk_notes: list[str] = Field(default_factory=list)
     scientific_disclaimers: list[str] = Field(default_factory=list)
 
 

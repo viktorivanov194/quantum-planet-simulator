@@ -37,6 +37,20 @@ PLANET_RULES = {
 }
 
 PLANET_PRESETS = {
+    "temperate_water_world": {
+        "planet_name": "QPS-TWW-114",
+        "star_type": "K-type",
+        "orbit_zone": "temperate",
+        "radius_rearth": 1.18,
+        "mass_mearth": 1.56,
+        "equilibrium_temperature_k": 289.0,
+        "radiation_level": 0.88,
+        "atmosphere": {
+            "pressure_bar": 1.18,
+            "temperature_k": 294.0,
+            "gas_fractions": {"N2": 0.62, "O2": 0.16, "H2O": 0.12, "CO2": 0.08, "Ar": 0.02},
+        },
+    },
     "temperate_rocky": {
         "star_type": "K-type",
         "orbit_zone": "temperate",
@@ -61,6 +75,48 @@ PLANET_PRESETS = {
             "pressure_bar": 12.0,
             "temperature_k": 510.0,
             "gas_fractions": {"CO2": 0.75, "N2": 0.17, "SO2": 0.08},
+        },
+    },
+    "hot_dense_carbon_world": {
+        "planet_name": "QPS-HDC-842",
+        "star_type": "G-type",
+        "orbit_zone": "hot",
+        "radius_rearth": 1.64,
+        "mass_mearth": 3.35,
+        "equilibrium_temperature_k": 472.0,
+        "radiation_level": 2.8,
+        "atmosphere": {
+            "pressure_bar": 14.5,
+            "temperature_k": 518.0,
+            "gas_fractions": {"CO2": 0.68, "CO": 0.12, "N2": 0.12, "SO2": 0.08},
+        },
+    },
+    "cold_methane_frontier": {
+        "planet_name": "QPS-CMF-314",
+        "star_type": "M-type",
+        "orbit_zone": "cold",
+        "radius_rearth": 1.38,
+        "mass_mearth": 2.05,
+        "equilibrium_temperature_k": 188.0,
+        "radiation_level": 1.22,
+        "atmosphere": {
+            "pressure_bar": 1.8,
+            "temperature_k": 176.0,
+            "gas_fractions": {"N2": 0.54, "CH4": 0.18, "CO2": 0.12, "H2": 0.1, "Ar": 0.06},
+        },
+    },
+    "hazy_sub_neptune": {
+        "planet_name": "QPS-HSN-509",
+        "star_type": "K-type",
+        "orbit_zone": "temperate",
+        "radius_rearth": 2.05,
+        "mass_mearth": 6.8,
+        "equilibrium_temperature_k": 336.0,
+        "radiation_level": 1.35,
+        "atmosphere": {
+            "pressure_bar": 4.8,
+            "temperature_k": 348.0,
+            "gas_fractions": {"H2": 0.42, "He": 0.24, "H2O": 0.1, "CH4": 0.08, "CO2": 0.08, "N2": 0.08},
         },
     },
 }

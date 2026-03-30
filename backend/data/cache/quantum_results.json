@@ -1,0 +1,17 @@
+{
+  "H2O": {
+    "baseline_agreement_score": 0.902,
+    "classical_reference_energy_proxy": -3.181974,
+    "confidence_score": 0.81,
+    "formula": "H2O",
+    "ground_state_energy_proxy": -3.181974,
+    "metadata": {
+      "method": "qiskit_proxy_solver",
+      "mode": "demo_balanced",
+      "verification_mode": "live_quantum_proxy_vs_classical_exact"
+    },
+    "name": "Water Vapor",
+    "notes": "Stored after local live proxy evaluation.",
+    "stability_score": 0.969
+  }
+}

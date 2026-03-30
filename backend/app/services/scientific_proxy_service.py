@@ -104,12 +104,29 @@ def build_scientific_proxy_profile(
     visibility += 0.04 * (quantum.confidence_score or 0.0) if quantum else 0.0
     spectral_visibility_score = _clamp(visibility, 0.0, 1.0)
 
+    atmospheric_clarity_mode = _classify_atmospheric_clarity(cloud_haze_factor, spectral_visibility_score, profile)
+    observation_confidence_mode = _classify_observation_confidence(
+        validation=validation,
+        spectral_visibility_score=spectral_visibility_score,
+        atmospheric_clarity_mode=atmospheric_clarity_mode,
+        quantum=quantum,
+    )
+    observation_risk_notes = _build_observation_risk_notes(
+        validation=validation,
+        cloud_haze_factor=cloud_haze_factor,
+        atmospheric_clarity_mode=atmospheric_clarity_mode,
+        observation_confidence_mode=observation_confidence_mode,
+        profile=profile,
+    )
+
     disclaimers = [
         "This simulation uses lightweight atmospheric proxy logic rather than full radiative-transfer physics.",
         "Chemistry scoring is rule-based and explainable, not a retrieval or equilibrium solver.",
         "Quantum output is a focused molecular proxy signal for tiny systems only.",
         "Transmission spectra are synthetic signatures informed by known molecular absorption behavior.",
     ]
+    if observation_confidence_mode in {"ambiguous", "null-signal"}:
+        disclaimers.append("Observed-like ambiguity is represented with synthetic proxy logic and should not be treated as a detection claim.")
 
     return ScientificProxyProfile(
         mean_molecular_weight_proxy=round(mean_weight, 2),
@@ -119,6 +136,9 @@ def build_scientific_proxy_profile(
         carbon_richness_proxy=round(carbon_richness_proxy, 3),
         nitrogen_richness_proxy=round(nitrogen_richness_proxy, 3),
         spectral_visibility_score=round(spectral_visibility_score, 3),
+        atmospheric_clarity_mode=atmospheric_clarity_mode,
+        observation_confidence_mode=observation_confidence_mode,
+        observation_risk_notes=observation_risk_notes,
         scientific_disclaimers=disclaimers,
     )
 
@@ -163,7 +183,15 @@ def build_visual_physics_profile(
     particle_density = round(_clamp(0.65 + 0.45 * radiation_factor + 0.25 * scientific.cloud_haze_factor, 0.5, 2.0), 3)
     spectrum_accent_palette = SPECTRUM_PALETTES.get(selected_formula or "", ["#7dd3fc", "#fde68a", "#c4b5fd"])
     quantum_chamber_intensity = round(
-        _clamp(0.35 + 0.30 * (quantum.stability_score if quantum else 0.45) + 0.15 * radiation_factor, 0.25, 1.0),
+        _clamp(
+            0.35
+            + 0.30 * (quantum.stability_score if quantum else 0.45)
+            + 0.15 * radiation_factor
+            - (0.08 if scientific.observation_confidence_mode == "ambiguous" else 0.0)
+            - (0.16 if scientific.observation_confidence_mode == "null-signal" else 0.0),
+            0.25,
+            1.0,
+        ),
         3,
     )
     quantum_ring_speed = round(
@@ -171,6 +199,10 @@ def build_visual_physics_profile(
         3,
     )
     validation_overlay_tone = _validation_tone(validation)
+    if validation_overlay_tone == "stable" and scientific.observation_confidence_mode == "ambiguous":
+        validation_overlay_tone = "watch"
+    elif scientific.observation_confidence_mode == "null-signal":
+        validation_overlay_tone = "caution"
 
     return VisualPhysicsProfile(
         surface_palette=surface_palette,
@@ -250,6 +282,60 @@ def _validation_tone(validation: ValidationResult) -> str:
     if validation.score > 0.88:
         return "stable"
     return "caution"
+
+
+def _classify_atmospheric_clarity(
+    cloud_haze_factor: float,
+    spectral_visibility_score: float,
+    profile: PlanetProfile,
+) -> str:
+    if spectral_visibility_score < 0.22 or cloud_haze_factor > 0.72:
+        return "feature-flat"
+    if cloud_haze_factor > 0.56 or profile.atmosphere.pressure_bar > 6.0:
+        return "cloud-muted"
+    if cloud_haze_factor > 0.34:
+        return "hazy"
+    return "clear"
+
+
+def _classify_observation_confidence(
+    validation: ValidationResult,
+    spectral_visibility_score: float,
+    atmospheric_clarity_mode: str,
+    quantum: QuantumEvaluationResult | None,
+) -> str:
+    warning_count = sum(1 for issue in validation.issues if issue.severity == "warning")
+    quantum_confidence = quantum.confidence_score if quantum and quantum.confidence_score is not None else 0.5
+
+    if not validation.is_valid or spectral_visibility_score < 0.18:
+        return "null-signal"
+    if atmospheric_clarity_mode == "feature-flat":
+        return "null-signal" if spectral_visibility_score < 0.28 else "ambiguous"
+    if atmospheric_clarity_mode == "cloud-muted" and (spectral_visibility_score < 0.46 or warning_count >= 2):
+        return "ambiguous"
+    if warning_count >= 2 or spectral_visibility_score < 0.5 or quantum_confidence < 0.58:
+        return "weak-feature"
+    return "strong-feature"
+
+
+def _build_observation_risk_notes(
+    validation: ValidationResult,
+    cloud_haze_factor: float,
+    atmospheric_clarity_mode: str,
+    observation_confidence_mode: str,
+    profile: PlanetProfile,
+) -> list[str]:
+    notes: list[str] = []
+    if atmospheric_clarity_mode in {"hazy", "cloud-muted", "feature-flat"}:
+        notes.append(f"Atmospheric clarity is classified as {atmospheric_clarity_mode}, so features may be suppressed.")
+    if observation_confidence_mode in {"ambiguous", "null-signal"}:
+        notes.append("Observational interpretation remains ambiguous in this proxy run.")
+    if profile.radiation_level > 2.5:
+        notes.append("Elevated radiation may reduce clean feature interpretation.")
+    if cloud_haze_factor > 0.55:
+        notes.append("Cloud and haze proxies are high enough to flatten the synthetic transmission signature.")
+    notes.extend(issue.message for issue in validation.issues[:2])
+    return notes[:4]
 
 
 def _normalize(value: float, minimum: float, maximum: float) -> float:

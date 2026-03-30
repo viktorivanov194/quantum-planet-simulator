@@ -2,8 +2,16 @@ import { SimulationResponse } from "@/lib/types/simulation";
 
 const DEFAULT_BASE_URL = "http://127.0.0.1:8000/api/v1";
 
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
 export async function runSimulation(
-  payload: Record<string, string | number>,
+  payload: Record<string, JsonValue>,
   baseUrl: string = process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_BASE_URL
 ): Promise<SimulationResponse> {
   const response = await fetch(`${baseUrl}/simulation/run`, {

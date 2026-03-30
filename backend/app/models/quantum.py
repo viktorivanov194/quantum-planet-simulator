@@ -22,6 +22,9 @@ class QuantumEvaluationResult(BaseModel):
     source: Literal["cached", "live", "fallback"]
     notes: list[str] = Field(default_factory=list)
     confidence_score: float | None = Field(default=None, ge=0.0, le=1.0)
+    classical_reference_energy_proxy: float | None = Field(default=None)
+    baseline_agreement_score: float | None = Field(default=None, ge=0.0, le=1.0)
+    verification_mode: str | None = Field(default=None)
 
 
 class QuantumEvaluationResponse(BaseModel):

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.core.planet_rules import PLANET_PRESETS
 from app.models.chemistry import CandidateRequest, MoleculeCandidate, QuantumCandidateInput
 from app.models.planet import PlanetGenerationRequest
 from app.models.quantum import QuantumEvaluationResult
@@ -17,11 +18,20 @@ from app.services.spectrum_service import generate_synthetic_spectrum
 
 
 def run_simulation_pipeline(request: SimulationRunRequest) -> SimulationRunResponse:
+    preset = PLANET_PRESETS.get(request.preset_name or "", {})
+    star_type = request.star_type
+    orbit_zone = request.orbit_zone
+    if request.preset_name:
+        if star_type == SimulationRunRequest.model_fields["star_type"].default:
+            star_type = preset.get("star_type", star_type)
+        if orbit_zone == SimulationRunRequest.model_fields["orbit_zone"].default:
+            orbit_zone = preset.get("orbit_zone", orbit_zone)
+
     profile = generate_planet_profile(
         PlanetGenerationRequest(
             generation_mode=request.generation_mode,
-            star_type=request.star_type,
-            orbit_zone=request.orbit_zone,
+            star_type=star_type,
+            orbit_zone=orbit_zone,
             seed=request.seed,
             preset_name=request.preset_name,
             planet_name=request.planet_name,
@@ -43,6 +53,7 @@ def run_simulation_pipeline(request: SimulationRunRequest) -> SimulationRunRespo
     quantum = None
     spectrum = None
     final_report = None
+    scientific_proxy_profile = None
 
     if selected_candidate is not None:
         quantum_response = evaluate_candidates(
@@ -53,12 +64,19 @@ def run_simulation_pipeline(request: SimulationRunRequest) -> SimulationRunRespo
             )
         )
         quantum = quantum_response.selected_result
+        scientific_proxy_profile = build_scientific_proxy_profile(
+            profile=profile,
+            validation=validation,
+            chemistry=chemistry,
+            quantum=quantum,
+        )
         spectrum = generate_synthetic_spectrum(
             SpectrumRequest(
                 profile=profile,
                 chemistry_modes=chemistry.chemistry_modes,
                 quantum_result=quantum,
                 chemistry_candidates=quantum_candidates,
+                scientific_profile=scientific_proxy_profile,
             )
         )
         final_report = build_final_report(
@@ -68,9 +86,10 @@ def run_simulation_pipeline(request: SimulationRunRequest) -> SimulationRunRespo
             selected_candidate=selected_candidate,
             quantum=quantum,
             spectrum=spectrum,
+            scientific=scientific_proxy_profile,
         )
 
-    scientific_proxy_profile = build_scientific_proxy_profile(
+    scientific_proxy_profile = scientific_proxy_profile or build_scientific_proxy_profile(
         profile=profile,
         validation=validation,
         chemistry=chemistry,

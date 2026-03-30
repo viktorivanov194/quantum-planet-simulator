@@ -1,6 +1,7 @@
 from app.models.chemistry import QuantumCandidateInput
 from app.models.planet import AtmosphericProfile, PlanetProfile
 from app.models.quantum import QuantumEvaluationResult
+from app.models.scientific import ScientificProxyProfile
 from app.models.spectrum import SpectrumRequest
 from app.services.spectrum_service import generate_synthetic_spectrum
 
@@ -48,9 +49,24 @@ def test_stable_response_structure() -> None:
     assert hasattr(response, "dominant_molecules")
     assert hasattr(response, "metadata")
     assert response.metadata.generator == "synthetic_signature_blend"
+    assert response.metadata.atmospheric_clarity_mode == "clear"
 
 
-def _request(selected_formula: str = "H2O") -> SpectrumRequest:
+def test_feature_flat_mode_reduces_peak_contrast() -> None:
+    clear_response = generate_synthetic_spectrum(_request())
+    flat_response = generate_synthetic_spectrum(_request(clarity_mode="feature-flat", observation_mode="null-signal"))
+
+    clear_span = max(clear_response.absorption_values) - min(clear_response.absorption_values)
+    flat_span = max(flat_response.absorption_values) - min(flat_response.absorption_values)
+
+    assert flat_span < clear_span
+
+
+def _request(
+    selected_formula: str = "H2O",
+    clarity_mode: str = "clear",
+    observation_mode: str = "strong-feature",
+) -> SpectrumRequest:
     return SpectrumRequest(
         profile=PlanetProfile(
             planet_name="Spec-1",
@@ -97,4 +113,17 @@ def _request(selected_formula: str = "H2O") -> SpectrumRequest:
                 chemistry_modes=["oxidizing"],
             ),
         ],
+        scientific_profile=ScientificProxyProfile(
+            mean_molecular_weight_proxy=24.5,
+            scale_height_proxy=1.05,
+            cloud_haze_factor=0.18 if clarity_mode == "clear" else 0.78,
+            oxidation_index_proxy=0.42,
+            carbon_richness_proxy=0.22,
+            nitrogen_richness_proxy=0.68,
+            spectral_visibility_score=0.82 if observation_mode == "strong-feature" else 0.2,
+            atmospheric_clarity_mode=clarity_mode,
+            observation_confidence_mode=observation_mode,
+            observation_risk_notes=[],
+            scientific_disclaimers=[],
+        ),
     )

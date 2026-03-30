@@ -5,6 +5,7 @@ import math
 from app.core.spectrum_rules import MOLECULE_SIGNATURES, SPECTRUM_MODE_ADJUSTMENTS, WAVELENGTH_GRID
 from app.models.chemistry import QuantumCandidateInput
 from app.models.quantum import QuantumEvaluationResult
+from app.models.scientific import ScientificProxyProfile
 from app.models.spectrum import SpectrumFeature, SpectrumMetadata, SpectrumPoint, SpectrumRequest, SpectrumResponse
 
 
@@ -12,6 +13,12 @@ def generate_synthetic_spectrum(request: SpectrumRequest) -> SpectrumResponse:
     chemistry_modes = request.chemistry_modes or _infer_modes_from_candidates(request.chemistry_candidates)
     dominant_molecules = _collect_dominant_molecules(request)
     amplitude_scale, baseline_shift = _mode_scalars(chemistry_modes)
+    amplitude_scale, baseline_shift = _apply_clarity_scalars(
+        amplitude_scale,
+        baseline_shift,
+        request.scientific_profile.atmospheric_clarity_mode if request.scientific_profile else "clear",
+        request.scientific_profile.spectral_visibility_score if request.scientific_profile else 0.5,
+    )
     quantum_boost = _quantum_influence(request.quantum_result)
 
     absorption_values = []
@@ -23,13 +30,30 @@ def generate_synthetic_spectrum(request: SpectrumRequest) -> SpectrumResponse:
         absorption += _instrument_effect(wavelength, request.profile.radiation_level, request.profile.atmosphere.pressure_bar)
         absorption_values.append(round(max(0.0, min(absorption, 0.95)), 4))
 
+    absorption_values = _flatten_if_needed(
+        absorption_values=absorption_values,
+        atmospheric_clarity_mode=request.scientific_profile.atmospheric_clarity_mode if request.scientific_profile else "clear",
+        observation_confidence_mode=request.scientific_profile.observation_confidence_mode if request.scientific_profile else "strong-feature",
+    )
+
     points = [
         SpectrumPoint(wavelength_um=wavelength, absorption=absorption)
         for wavelength, absorption in zip(WAVELENGTH_GRID, absorption_values)
     ]
     features = _extract_features(dominant_molecules, request.quantum_result, request.profile.atmosphere.gas_fractions, amplitude_scale)
-    confidence_score = _spectrum_confidence(request.quantum_result, dominant_molecules)
-    summary_text = _build_summary(dominant_molecules, request.quantum_result, chemistry_modes, confidence_score)
+    features = _limit_features_for_observation_mode(
+        features,
+        request.scientific_profile.observation_confidence_mode if request.scientific_profile else "strong-feature",
+    )
+    confidence_score = _spectrum_confidence(request.quantum_result, dominant_molecules, request.scientific_profile)
+    summary_text = _build_summary(
+        dominant_molecules,
+        request.quantum_result,
+        chemistry_modes,
+        confidence_score,
+        request.scientific_profile.atmospheric_clarity_mode if request.scientific_profile else "clear",
+        request.scientific_profile.observation_confidence_mode if request.scientific_profile else "strong-feature",
+    )
 
     metadata = SpectrumMetadata(
         dominant_molecules=dominant_molecules,
@@ -37,6 +61,8 @@ def generate_synthetic_spectrum(request: SpectrumRequest) -> SpectrumResponse:
         confidence_score=confidence_score,
         generator="synthetic_signature_blend",
         selected_formula=request.quantum_result.formula if request.quantum_result else None,
+        atmospheric_clarity_mode=request.scientific_profile.atmospheric_clarity_mode if request.scientific_profile else "clear",
+        observation_confidence_mode=request.scientific_profile.observation_confidence_mode if request.scientific_profile else "strong-feature",
     )
 
     return SpectrumResponse(
@@ -69,6 +95,21 @@ def _mode_scalars(chemistry_modes: list[str]) -> tuple[float, float]:
             amplitude *= adjustment["amplitude"]
             baseline += adjustment["baseline"]
     return amplitude, baseline
+
+
+def _apply_clarity_scalars(
+    amplitude_scale: float,
+    baseline_shift: float,
+    atmospheric_clarity_mode: str,
+    spectral_visibility_score: float,
+) -> tuple[float, float]:
+    if atmospheric_clarity_mode == "feature-flat":
+        return amplitude_scale * 0.55, baseline_shift - 0.002
+    if atmospheric_clarity_mode == "cloud-muted":
+        return amplitude_scale * 0.72, baseline_shift - 0.001
+    if atmospheric_clarity_mode == "hazy":
+        return amplitude_scale * 0.88, baseline_shift
+    return amplitude_scale * (0.96 + spectral_visibility_score * 0.12), baseline_shift
 
 
 def _quantum_influence(quantum_result: QuantumEvaluationResult | None) -> float:
@@ -110,6 +151,28 @@ def _instrument_effect(wavelength: float, radiation_level: float, pressure_bar: 
     return ripple + pressure_smoothing + radiation_noise
 
 
+def _flatten_if_needed(
+    absorption_values: list[float],
+    atmospheric_clarity_mode: str,
+    observation_confidence_mode: str,
+) -> list[float]:
+    if atmospheric_clarity_mode not in {"feature-flat", "cloud-muted"} and observation_confidence_mode not in {"ambiguous", "null-signal"}:
+        return absorption_values
+
+    mean_absorption = sum(absorption_values) / max(len(absorption_values), 1)
+    if observation_confidence_mode == "null-signal":
+        flatten_strength = 0.72
+    elif atmospheric_clarity_mode == "feature-flat":
+        flatten_strength = 0.58
+    else:
+        flatten_strength = 0.34
+
+    return [
+        round((value * (1.0 - flatten_strength)) + (mean_absorption * flatten_strength), 4)
+        for value in absorption_values
+    ]
+
+
 def _extract_features(
     dominant_molecules: list[str],
     quantum_result: QuantumEvaluationResult | None,
@@ -141,15 +204,33 @@ def _extract_features(
     return features
 
 
+def _limit_features_for_observation_mode(
+    features: list[SpectrumFeature],
+    observation_confidence_mode: str,
+) -> list[SpectrumFeature]:
+    if observation_confidence_mode == "null-signal":
+        return features[:1]
+    if observation_confidence_mode == "ambiguous":
+        return features[:2]
+    return features
+
+
 def _spectrum_confidence(
     quantum_result: QuantumEvaluationResult | None,
     dominant_molecules: list[str],
+    scientific_profile: ScientificProxyProfile | None,
 ) -> float:
     base = 0.62 + min(len(dominant_molecules), 4) * 0.04
     if quantum_result is not None:
         base += (quantum_result.confidence_score or 0.5) * 0.18
         if quantum_result.source == "live":
             base += 0.04
+    if scientific_profile is not None:
+        base += scientific_profile.spectral_visibility_score * 0.08
+        if scientific_profile.observation_confidence_mode == "ambiguous":
+            base -= 0.1
+        if scientific_profile.observation_confidence_mode == "null-signal":
+            base -= 0.2
     return round(max(0.0, min(base, 0.96)), 3)
 
 
@@ -158,12 +239,16 @@ def _build_summary(
     quantum_result: QuantumEvaluationResult | None,
     chemistry_modes: list[str],
     confidence_score: float,
+    atmospheric_clarity_mode: str,
+    observation_confidence_mode: str,
 ) -> str:
     selected_formula = quantum_result.formula if quantum_result else dominant_molecules[0]
     modes_text = ", ".join(chemistry_modes[:2]) if chemistry_modes else "balanced atmosphere"
     dominant_text = ", ".join(dominant_molecules[:3])
+    observation_text = observation_confidence_mode.replace("-", " ")
     return (
         f"Synthetic transmission spectrum emphasizes {selected_formula} within a {modes_text} context. "
+        f"Atmospheric clarity is {atmospheric_clarity_mode}, with a {observation_text} observational posture. "
         f"Dominant visible contributors: {dominant_text}. Confidence {confidence_score:.2f}."
     )
 

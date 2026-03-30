@@ -1,6 +1,7 @@
 from app.models.chemistry import CandidateResponse, MoleculeCandidate, QuantumCandidateInput
 from app.models.planet import AtmosphericProfile, PlanetProfile, ValidationResult
 from app.models.quantum import QuantumEvaluationResult
+from app.models.scientific import ScientificProxyProfile
 from app.models.spectrum import SpectrumMetadata, SpectrumResponse
 from app.services.report_service import build_final_report
 
@@ -13,12 +14,29 @@ def test_build_final_report_shape() -> None:
         selected_candidate=_selected_candidate(),
         quantum=_quantum(),
         spectrum=_spectrum(),
+        scientific=_scientific(),
     )
 
     assert report.title
     assert report.discovery_headline
     assert report.key_highlights
     assert 0.0 <= report.confidence_score <= 1.0
+    assert "observation mode" in report.chemistry_overview.lower()
+
+
+def test_build_final_report_handles_ambiguous_observation_mode() -> None:
+    report = build_final_report(
+        profile=_profile(),
+        validation=ValidationResult(is_valid=True, score=0.72, issues=[]),
+        chemistry=_chemistry(),
+        selected_candidate=_selected_candidate(),
+        quantum=_quantum(),
+        spectrum=_spectrum(),
+        scientific=_scientific(observation_mode="ambiguous", clarity_mode="cloud-muted"),
+    )
+
+    assert "ambiguous" in report.discovery_headline.lower()
+    assert any("ambigu" in note.lower() or "suppressed" in note.lower() for note in report.caution_notes)
 
 
 def _profile() -> PlanetProfile:
@@ -99,5 +117,23 @@ def _spectrum() -> SpectrumResponse:
             summary_text="Synthetic transmission spectrum emphasizes H2O.",
             confidence_score=0.9,
             selected_formula="H2O",
+            atmospheric_clarity_mode="clear",
+            observation_confidence_mode="strong-feature",
         ),
+    )
+
+
+def _scientific(observation_mode: str = "strong-feature", clarity_mode: str = "clear") -> ScientificProxyProfile:
+    return ScientificProxyProfile(
+        mean_molecular_weight_proxy=24.5,
+        scale_height_proxy=1.04,
+        cloud_haze_factor=0.18 if clarity_mode == "clear" else 0.63,
+        oxidation_index_proxy=0.44,
+        carbon_richness_proxy=0.22,
+        nitrogen_richness_proxy=0.68,
+        spectral_visibility_score=0.84 if observation_mode == "strong-feature" else 0.38,
+        atmospheric_clarity_mode=clarity_mode,
+        observation_confidence_mode=observation_mode,
+        observation_risk_notes=["Observational interpretation remains ambiguous in this proxy run."] if observation_mode == "ambiguous" else [],
+        scientific_disclaimers=[],
     )

@@ -2,22 +2,44 @@
 
 import { motion } from "framer-motion";
 
-import { SimulationPreset } from "@/lib/types/simulation";
+import { ExperienceMode, SimulationPreset } from "@/lib/types/simulation";
 
 interface PresetSwitcherProps {
+  mode: ExperienceMode;
   presets: SimulationPreset[];
   activePreset: SimulationPreset["key"];
+  onModeChange: (mode: ExperienceMode) => void;
   onSelect: (key: SimulationPreset["key"]) => void;
 }
 
 export function PresetSwitcher({
+  mode,
   presets,
   activePreset,
+  onModeChange,
   onSelect
 }: PresetSwitcherProps) {
   return (
-    <section className="pointer-events-auto flex flex-wrap gap-2">
-      {presets.map((preset, index) => {
+    <section className="pointer-events-auto space-y-3">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onModeChange("presets")}
+          className={["preset-pill flex-1 justify-center text-center", mode === "presets" ? "preset-pill-active" : "hover:border-white/20 hover:bg-white/[0.08]"].join(" ")}
+        >
+          Preset Missions
+        </button>
+        <button
+          type="button"
+          onClick={() => onModeChange("builder")}
+          className={["preset-pill flex-1 justify-center text-center", mode === "builder" ? "preset-pill-active" : "hover:border-white/20 hover:bg-white/[0.08]"].join(" ")}
+        >
+          Planet Builder
+        </button>
+      </div>
+      {mode === "presets" ? (
+        <div className="flex flex-wrap gap-2">
+          {presets.map((preset, index) => {
         const isActive = preset.key === activePreset;
 
         return (
@@ -37,7 +59,9 @@ export function PresetSwitcher({
             {preset.title}
           </motion.button>
         );
-      })}
+          })}
+        </div>
+      ) : null}
     </section>
   );
 }
