@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.models.chemistry import CandidateResponse
 from app.models.planet import PlanetProfile, ValidationResult
+from app.models.qfg import QFGSimulationResult
 from app.models.quantum import QuantumEvaluationResult
 from app.models.scientific import ScientificProxyProfile, VisualPhysicsProfile
 from app.models.spectrum import SpectrumResponse
@@ -150,6 +151,7 @@ def build_visual_physics_profile(
     scientific: ScientificProxyProfile,
     quantum: QuantumEvaluationResult | None,
     spectrum: SpectrumResponse | None,
+    qfg: QFGSimulationResult | None,
 ) -> VisualPhysicsProfile:
     temperature = profile.atmosphere.temperature_k
     pressure = profile.atmosphere.pressure_bar
@@ -187,6 +189,7 @@ def build_visual_physics_profile(
             0.35
             + 0.30 * (quantum.stability_score if quantum else 0.45)
             + 0.15 * radiation_factor
+            + 0.10 * _qfg_resonance_intensity(qfg)
             - (0.08 if scientific.observation_confidence_mode == "ambiguous" else 0.0)
             - (0.16 if scientific.observation_confidence_mode == "null-signal" else 0.0),
             0.25,
@@ -195,7 +198,12 @@ def build_visual_physics_profile(
         3,
     )
     quantum_ring_speed = round(
-        _clamp(0.35 + 0.35 * (quantum.confidence_score or 0.55) + 0.15 * radiation_factor if quantum else 0.45, 0.2, 1.2),
+        _clamp(
+            (0.35 + 0.35 * (quantum.confidence_score or 0.55) + 0.15 * radiation_factor if quantum else 0.45)
+            + (0.15 * qfg.coherence_score if qfg else 0.0),
+            0.2,
+            1.2,
+        ),
         3,
     )
     validation_overlay_tone = _validation_tone(validation)
@@ -203,6 +211,9 @@ def build_visual_physics_profile(
         validation_overlay_tone = "watch"
     elif scientific.observation_confidence_mode == "null-signal":
         validation_overlay_tone = "caution"
+
+    qfg_resonance_intensity = _qfg_resonance_intensity(qfg)
+    qfg_density_band = _qfg_density_band(qfg)
 
     return VisualPhysicsProfile(
         surface_palette=surface_palette,
@@ -226,6 +237,8 @@ def build_visual_physics_profile(
         spectrum_accent_palette=spectrum_accent_palette,
         quantum_chamber_intensity=quantum_chamber_intensity,
         quantum_ring_speed=quantum_ring_speed,
+        qfg_resonance_intensity=round(qfg_resonance_intensity, 3),
+        qfg_density_band=[round(value, 3) for value in qfg_density_band],
         validation_overlay_tone=validation_overlay_tone,
     )
 
@@ -282,6 +295,24 @@ def _validation_tone(validation: ValidationResult) -> str:
     if validation.score > 0.88:
         return "stable"
     return "caution"
+
+
+def _qfg_resonance_intensity(qfg: QFGSimulationResult | None) -> float:
+    if qfg is None:
+        return 0.45
+    observable_peak = max((point.resonance_signal for point in qfg.observables), default=0.0)
+    resonance_seed = 0.45 * observable_peak + 0.35 * qfg.coherence_score + 0.20 * qfg.stability_score
+    if qfg.resonance_detected:
+        resonance_seed += 0.1
+    return _clamp(resonance_seed, 0.0, 1.0)
+
+
+def _qfg_density_band(qfg: QFGSimulationResult | None) -> list[float]:
+    if qfg is None:
+        return [0.0, 0.0]
+    lower = _clamp(qfg.density_mean, 0.0, 1.0)
+    upper = _clamp(qfg.density_peak, lower, max(lower, 1.0))
+    return [lower, upper]
 
 
 def _classify_atmospheric_clarity(

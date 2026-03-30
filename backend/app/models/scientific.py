@@ -39,4 +39,6 @@ class VisualPhysicsProfile(BaseModel):
     spectrum_accent_palette: list[str] = Field(default_factory=lambda: ["#7dd3fc", "#fde68a", "#c4b5fd"])
     quantum_chamber_intensity: float = Field(default=0.55, ge=0.0, le=1.0)
     quantum_ring_speed: float = Field(default=0.5, ge=0.0, le=2.0)
+    qfg_resonance_intensity: float = Field(default=0.45, ge=0.0, le=1.0)
+    qfg_density_band: list[float] = Field(default_factory=lambda: [0.0, 0.0])
     validation_overlay_tone: str = Field(default="stable")

@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from app.models.chemistry import CandidateResponse, QuantumCandidateInput
 from app.models.planet import AtmosphericProfileInput, PlanetProfile, ValidationResult
+from app.models.qfg import QFGSimulationConfig, QFGSimulationResult
 from app.models.quantum import QuantumEvaluationResult
 from app.models.report import FinalDiscoveryReport
 from app.models.scientific import ScientificProxyProfile, VisualPhysicsProfile
@@ -26,6 +27,7 @@ class SimulationRunRequest(BaseModel):
     max_candidates: int = Field(default=3, ge=1, le=10)
     selected_candidate: str | None = Field(default=None)
     quantum_runtime_mode: str = Field(default="demo_balanced")
+    qfg: QFGSimulationConfig = Field(default_factory=QFGSimulationConfig)
 
 
 class SimulationRunResponse(BaseModel):
@@ -35,6 +37,7 @@ class SimulationRunResponse(BaseModel):
     selected_candidate: QuantumCandidateInput | None = None
     quantum: QuantumEvaluationResult | None = None
     spectrum: SpectrumResponse | None = None
+    qfg: QFGSimulationResult | None = None
     scientific_proxy_profile: ScientificProxyProfile
     visual_physics_profile: VisualPhysicsProfile
     report_summary: str = Field(default="")

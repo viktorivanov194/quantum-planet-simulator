@@ -82,6 +82,33 @@ export interface QuantumEvaluationResult {
   verification_mode?: string | null;
 }
 
+export interface QFGObservablePoint {
+  step: number;
+  total_energy: number;
+  coherence: number;
+  mode_variance: number;
+  resonance_signal: number;
+}
+
+export interface QFGSimulationResult {
+  enabled: boolean;
+  model_version: string;
+  grid_size: number;
+  steps: number;
+  dt: number;
+  coupling_beta: number;
+  resonance_detected: boolean;
+  resonance_frequency_delta: number;
+  stability_score: number;
+  coherence_score: number;
+  density_peak: number;
+  density_mean: number;
+  phi_alignment_score: number;
+  dominant_mode_hint: string;
+  observables: QFGObservablePoint[];
+  notes: string[];
+}
+
 export interface SpectrumFeature {
   wavelength_um: number;
   label: string;
@@ -154,6 +181,8 @@ export interface VisualPhysicsProfile {
   spectrum_accent_palette: string[];
   quantum_chamber_intensity: number;
   quantum_ring_speed: number;
+  qfg_resonance_intensity: number;
+  qfg_density_band: number[];
   validation_overlay_tone: string;
 }
 
@@ -200,6 +229,7 @@ export interface SimulationResponse {
   selected_candidate?: QuantumCandidateInput | null;
   quantum?: QuantumEvaluationResult | null;
   spectrum?: SpectrumResponse | null;
+  qfg?: QFGSimulationResult | null;
   scientific_proxy_profile: ScientificProxyProfile;
   visual_physics_profile: VisualPhysicsProfile;
   report_summary: string;

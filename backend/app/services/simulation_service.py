@@ -8,6 +8,7 @@ from app.models.simulation import SimulationRunRequest, SimulationRunResponse
 from app.models.spectrum import SpectrumRequest
 from app.services.chemistry_service import get_candidate_molecules
 from app.services.planet_service import generate_planet_profile, validate_planet_profile
+from app.services.qfg_service import run_qfg_field_simulation
 from app.services.quantum_service import build_quantum_request, evaluate_candidates
 from app.services.report_service import build_final_report
 from app.services.scientific_proxy_service import (
@@ -52,6 +53,7 @@ def run_simulation_pipeline(request: SimulationRunRequest) -> SimulationRunRespo
     selected_candidate = _pick_quantum_candidate(quantum_candidates, request.selected_candidate)
     quantum = None
     spectrum = None
+    qfg = None
     final_report = None
     scientific_proxy_profile = None
 
@@ -79,6 +81,7 @@ def run_simulation_pipeline(request: SimulationRunRequest) -> SimulationRunRespo
                 scientific_profile=scientific_proxy_profile,
             )
         )
+        qfg = run_qfg_field_simulation(request.qfg, profile=profile)
         final_report = build_final_report(
             profile=profile,
             validation=validation,
@@ -102,6 +105,7 @@ def run_simulation_pipeline(request: SimulationRunRequest) -> SimulationRunRespo
         scientific=scientific_proxy_profile,
         quantum=quantum,
         spectrum=spectrum,
+        qfg=qfg,
     )
 
     return SimulationRunResponse(
@@ -111,6 +115,7 @@ def run_simulation_pipeline(request: SimulationRunRequest) -> SimulationRunRespo
         selected_candidate=selected_candidate,
         quantum=quantum,
         spectrum=spectrum,
+        qfg=qfg,
         scientific_proxy_profile=scientific_proxy_profile,
         visual_physics_profile=visual_physics_profile,
         report_summary=final_report.discovery_headline if final_report else "Simulation run completed without a final report.",

@@ -719,6 +719,7 @@ function ResultOverlay({
       ) : (
         <>
           <StageReviewPanel result={result} stage={stage} onStageChange={onStageChange} />
+          {result.qfg ? <QFGDashboard result={result} /> : null}
           <AnimatePresence>
             {isDiscoveryStage ? (
               <motion.section
@@ -939,6 +940,55 @@ function StageReviewPanel({
         </button>
       </div>
     </motion.section>
+  );
+}
+
+function QFGDashboard({ result }: { result: SimulationResponse }) {
+  const qfg = result.qfg;
+  if (!qfg) {
+    return null;
+  }
+
+  const first = qfg.observables[0];
+  const last = qfg.observables[qfg.observables.length - 1];
+  const coherenceTrend = !first || !last ? "stable" : last.coherence > first.coherence + 0.015 ? "rising" : last.coherence < first.coherence - 0.015 ? "falling" : "stable";
+  const varianceTrend =
+    !first || !last
+      ? "stable"
+      : last.mode_variance > first.mode_variance + 0.015
+        ? "rising"
+        : last.mode_variance < first.mode_variance - 0.015
+          ? "falling"
+          : "stable";
+  const resonanceTone = qfg.resonance_detected ? "border-emerald-300/20 bg-emerald-500/10 text-emerald-100" : "border-sky-300/15 bg-sky-500/10 text-sky-100";
+
+  return (
+    <div className="mt-4 rounded-[1.6rem] border border-white/10 bg-black/25 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="section-kicker mb-1">QFG Dashboard</div>
+          <div className="text-base font-semibold text-white">Field Coherence Layer</div>
+        </div>
+        <div className={["rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.24em]", resonanceTone].join(" ")}>
+          {qfg.resonance_detected ? "Resonance Detected" : "No Resonance Lock"}
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <QfgStat label="Dominant mode" value={qfg.dominant_mode_hint} />
+        <QfgStat label="Coherence" value={`${(qfg.coherence_score * 100).toFixed(0)}% • ${coherenceTrend}`} />
+        <QfgStat label="Mode variance" value={`${last?.mode_variance.toFixed(3) ?? "n/a"} • ${varianceTrend}`} />
+        <QfgStat label="Density band" value={`${qfg.density_mean.toFixed(3)} / ${qfg.density_peak.toFixed(3)}`} />
+      </div>
+    </div>
+  );
+}
+
+function QfgStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+      <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500">{label}</div>
+      <div className="mt-1 text-sm font-medium text-slate-100">{value}</div>
+    </div>
   );
 }
 
