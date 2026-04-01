@@ -99,6 +99,8 @@ def test_unsupported_molecule_handling() -> None:
     assert response.results[0].probe_status == "unsupported"
     assert response.results[0].formula == "Ar"
     assert response.results[0].failure_reason == "molecule_unsupported"
+    assert response.results[0].electronic_energy_proxy is None
+    assert response.results[0].probe_agreement is None
 
 
 def test_stable_response_shape(tmp_path: Path) -> None:
@@ -167,6 +169,63 @@ def test_solver_failure_falls_back_to_cached(monkeypatch, tmp_path: Path) -> Non
 
     assert response.results[0].probe_status == "cached_reference"
     assert any("Live probe failed" in note or "cached reference shown instead" in note for note in response.results[0].scientific_caveats + response.results[0].provenance_details)
+
+
+def test_solver_failure_without_cache_returns_failed(monkeypatch, tmp_path: Path) -> None:
+    def fail_live(_: QuantumCandidateInput):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(molecular_probe_service, "_run_live_probe", fail_live)
+    response = molecular_probe_service.run_molecular_probe(
+        MolecularProbeRequest(
+            candidates=[_candidate("Hydrogen", "H2")],
+            runtime_mode="auto",
+            cache_path=str(tmp_path / "missing.json"),
+            selection_reason="test",
+        )
+    )
+
+    result = response.results[0]
+    assert result.probe_status == "failed"
+    assert result.failure_reason == "solver_error"
+    assert result.live_calculation_attempted is True
+    assert result.electronic_energy_proxy is None
+    assert result.reference_energy_proxy is None
+    assert result.probe_agreement is None
+
+
+def test_tier_b_never_attempts_live_even_if_requested(monkeypatch, tmp_path: Path) -> None:
+    cache_path = tmp_path / "probe_cache.json"
+    cache_path.write_text(
+        json.dumps(
+            {
+                "CO2": {
+                    "electronic_energy_proxy": -1.66,
+                    "reference_energy_proxy": -1.66,
+                    "probe_agreement": 0.86,
+                    "notes": "cached result",
+                    "metadata": {"method": "test_cache"},
+                }
+            }
+        )
+    )
+
+    def fail_if_called(_: QuantumCandidateInput):
+        raise AssertionError("live path should not run for tier B molecules")
+
+    monkeypatch.setattr(molecular_probe_service, "_run_live_probe", fail_if_called)
+    response = molecular_probe_service.run_molecular_probe(
+        MolecularProbeRequest(
+            candidates=[_candidate("Carbon Dioxide", "CO2")],
+            runtime_mode="live_if_supported",
+            cache_path=str(cache_path),
+            selection_reason="test",
+        )
+    )
+
+    result = response.results[0]
+    assert result.probe_status == "cached_reference"
+    assert result.live_calculation_attempted is False
 
 
 def _candidate(name: str, formula: str) -> QuantumCandidateInput:

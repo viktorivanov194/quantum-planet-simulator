@@ -4,7 +4,6 @@ import math
 
 from app.core.spectrum_rules import MOLECULE_SIGNATURES, SPECTRUM_MODE_ADJUSTMENTS, WAVELENGTH_GRID
 from app.models.chemistry import QuantumCandidateInput
-from app.models.quantum import QuantumEvaluationResult
 from app.models.scientific import ScientificProxyProfile
 from app.models.spectrum import SpectrumFeature, SpectrumMetadata, SpectrumPoint, SpectrumRequest, SpectrumResponse
 
@@ -56,7 +55,6 @@ def generate_synthetic_spectrum(request: SpectrumRequest) -> SpectrumResponse:
     ]
     features = _extract_features(
         dominant_molecules=dominant_molecules,
-        quantum_result=request.quantum_result,
         request=request,
         amplitude_scale=amplitude_scale,
         geometry_factor=geometry_factor,
@@ -70,7 +68,6 @@ def generate_synthetic_spectrum(request: SpectrumRequest) -> SpectrumResponse:
     confidence_score = _spectrum_confidence(dominant_molecules, request.scientific_profile, observation)
     summary_text = _build_summary(
         dominant_molecules,
-        request.quantum_result,
         chemistry_modes,
         confidence_score,
         request.scientific_profile.atmospheric_clarity_mode if request.scientific_profile else "clear",
@@ -105,8 +102,6 @@ def generate_synthetic_spectrum(request: SpectrumRequest) -> SpectrumResponse:
 
 def _collect_dominant_molecules(request: SpectrumRequest) -> list[str]:
     dominant = [gas for gas in request.profile.atmosphere.dominant_gases if gas in MOLECULE_SIGNATURES]
-    if request.quantum_result and request.quantum_result.formula in MOLECULE_SIGNATURES and request.quantum_result.formula not in dominant:
-        dominant.insert(0, request.quantum_result.formula)
     for candidate in request.chemistry_candidates:
         if candidate.formula in MOLECULE_SIGNATURES and candidate.formula not in dominant and len(dominant) < 4:
             dominant.append(candidate.formula)
@@ -260,22 +255,14 @@ def _flatten_if_needed(
 
 def _extract_features(
     dominant_molecules: list[str],
-    quantum_result: QuantumEvaluationResult | None,
     request: SpectrumRequest,
     amplitude_scale: float,
     geometry_factor: float,
     cloud_suppression: float,
     observation: dict[str, float],
 ) -> list[SpectrumFeature]:
-    feature_molecules: list[str] = []
-    if quantum_result and quantum_result.formula in MOLECULE_SIGNATURES:
-        feature_molecules.append(quantum_result.formula)
-    for molecule in dominant_molecules:
-        if molecule not in feature_molecules:
-            feature_molecules.append(molecule)
-
     features: list[SpectrumFeature] = []
-    for molecule in feature_molecules[:3]:
+    for molecule in dominant_molecules[:3]:
         signature = MOLECULE_SIGNATURES.get(molecule)
         if not signature:
             continue
@@ -327,19 +314,17 @@ def _spectrum_confidence(dominant_molecules: list[str], scientific_profile: Scie
 
 def _build_summary(
     dominant_molecules: list[str],
-    quantum_result: QuantumEvaluationResult | None,
     chemistry_modes: list[str],
     confidence_score: float,
     atmospheric_clarity_mode: str,
     observation_confidence_mode: str,
     observation: dict[str, float],
 ) -> str:
-    selected_formula = quantum_result.formula if quantum_result else dominant_molecules[0]
     modes_text = ", ".join(chemistry_modes[:2]) if chemistry_modes else "balanced atmosphere"
     dominant_text = ", ".join(dominant_molecules[:3])
     observation_text = observation_confidence_mode.replace("-", " ")
     return (
-        f"Synthetic transmission spectrum emphasizes {selected_formula} within a {modes_text} context. "
+        f"Synthetic transmission spectrum emphasizes candidate contributors within a {modes_text} context. "
         f"Atmospheric clarity is {atmospheric_clarity_mode}, with a {observation_text} observational posture. "
         f"Dominant visible contributors: {dominant_text}. "
         f"Resolution {observation['spectral_resolution_proxy']:.0f}, SNR {observation['signal_to_noise_proxy']:.1f}, confidence {confidence_score:.2f}."

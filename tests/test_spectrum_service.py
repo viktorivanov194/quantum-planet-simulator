@@ -34,6 +34,12 @@ def test_selected_quantum_result_does_not_change_spectrum_amplitude() -> None:
     )
 
     assert water_peak == methane_peak
+    assert water_response.absorption_values == methane_response.absorption_values
+    assert water_response.dominant_molecules == methane_response.dominant_molecules
+    assert [(feature.molecule, feature.strength) for feature in water_response.highlighted_features] == [
+        (feature.molecule, feature.strength) for feature in methane_response.highlighted_features
+    ]
+    assert water_response.summary_text == methane_response.summary_text
     assert water_response.metadata.selected_formula == "H2O"
     assert methane_response.metadata.selected_formula == "CH4"
 
