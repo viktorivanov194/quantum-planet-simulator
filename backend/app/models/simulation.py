@@ -4,10 +4,11 @@ from pydantic import BaseModel, Field
 
 from app.models.chemistry import CandidateResponse, QuantumCandidateInput
 from app.models.planet import AtmosphericProfileInput, PlanetProfile, ValidationResult
+from app.models.molecular_probe import MolecularProbeResult
 from app.models.qfg import QFGSimulationConfig, QFGSimulationResult
-from app.models.quantum import QuantumEvaluationResult
 from app.models.report import FinalDiscoveryReport
 from app.models.scientific import ScientificProxyProfile, VisualPhysicsProfile
+from app.models.state import PlanetAtmosphereState
 from app.models.spectrum import SpectrumResponse
 
 
@@ -32,10 +33,11 @@ class SimulationRunRequest(BaseModel):
 
 class SimulationRunResponse(BaseModel):
     profile: PlanetProfile
+    state: PlanetAtmosphereState
     validation: ValidationResult
     chemistry: CandidateResponse
     selected_candidate: QuantumCandidateInput | None = None
-    quantum: QuantumEvaluationResult | None = None
+    molecular_probe: MolecularProbeResult | None = None
     spectrum: SpectrumResponse | None = None
     qfg: QFGSimulationResult | None = None
     scientific_proxy_profile: ScientificProxyProfile

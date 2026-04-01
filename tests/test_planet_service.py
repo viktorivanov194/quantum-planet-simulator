@@ -1,5 +1,5 @@
 from app.models.planet import AtmosphericProfile, AtmosphericProfileInput, PlanetGenerationRequest, PlanetProfile
-from app.services.planet_service import generate_planet_profile, validate_planet_profile
+from app.services.planet_service import generate_planet_profile, generate_planet_state, validate_planet_profile
 
 
 def test_random_plausible_generation_is_deterministic() -> None:
@@ -44,6 +44,65 @@ def test_manual_generation_prefers_user_values() -> None:
     assert profile.atmosphere.pressure_bar == 1.3
     assert profile.atmosphere.temperature_k == 304.0
     assert profile.atmosphere.gas_fractions == {"N2": 0.7, "O2": 0.2, "CO2": 0.1}
+
+
+def test_direct_state_generation_is_deterministic() -> None:
+    request = PlanetGenerationRequest(generation_mode="random", star_type="K-type", orbit_zone="temperate", seed=42)
+
+    first = generate_planet_state(request)
+    second = generate_planet_state(request)
+
+    assert first == second
+    assert first.stellar_radius_rsun > 0.0
+    assert first.insolation_proxy > 0.0
+    assert first.mean_molecular_weight >= 2.0
+
+
+def test_profile_legacy_fields_are_derived_from_state() -> None:
+    request = PlanetGenerationRequest(
+        generation_mode="manual",
+        seed=17,
+        star_type="G-type",
+        orbit_zone="hot",
+        radius_rearth=1.6,
+        mass_mearth=2.4,
+        gravity_ms2=9.2,
+        atmosphere=AtmosphericProfileInput(
+            pressure_bar=3.2,
+            gas_fractions={"CO2": 0.5, "N2": 0.22, "H2O": 0.14, "CO": 0.08, "H2": 0.06},
+        ),
+    )
+
+    profile = generate_planet_profile(request)
+    state = generate_planet_state(request)
+
+    assert profile.radius_rearth == state.radius_rearth
+    assert profile.mass_mearth == state.mass_mearth
+    assert profile.gravity_ms2 == state.gravity_ms2
+    assert profile.equilibrium_temperature_k == state.equilibrium_temperature_k
+    assert profile.atmosphere.pressure_bar == state.reference_pressure_bar
+    assert profile.atmosphere.temperature_k == state.atmospheric_temperature_k
+
+
+def test_direct_state_includes_regime_classification() -> None:
+    request = PlanetGenerationRequest(
+        generation_mode="manual",
+        seed=11,
+        star_type="M-type",
+        orbit_zone="cold",
+        radius_rearth=1.4,
+        mass_mearth=1.9,
+        gravity_ms2=9.5,
+        atmosphere=AtmosphericProfileInput(
+            pressure_bar=1.7,
+            gas_fractions={"N2": 0.46, "CH4": 0.2, "H2": 0.16, "NH3": 0.08, "CO2": 0.1},
+        ),
+    )
+
+    state = generate_planet_state(request)
+
+    assert state.primary_atmospheric_regime == "cold_methane_atmosphere"
+    assert isinstance(state.secondary_regime_modifiers, list)
 
 
 def test_validation_success_case() -> None:

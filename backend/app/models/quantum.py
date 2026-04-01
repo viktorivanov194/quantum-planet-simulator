@@ -15,6 +15,7 @@ class QuantumEvaluationRequest(BaseModel):
 
 
 class QuantumEvaluationResult(BaseModel):
+    # Legacy compatibility model retained while the codebase migrates to MolecularProbeResult.
     name: str
     formula: str
     ground_state_energy_proxy: float

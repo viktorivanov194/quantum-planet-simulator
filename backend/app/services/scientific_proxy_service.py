@@ -5,6 +5,7 @@ from app.models.planet import PlanetProfile, ValidationResult
 from app.models.qfg import QFGSimulationResult
 from app.models.quantum import QuantumEvaluationResult
 from app.models.scientific import ScientificProxyProfile, VisualPhysicsProfile
+from app.models.state import PlanetAtmosphereState
 from app.models.spectrum import SpectrumResponse
 
 EARTH_MEAN_MOLECULAR_WEIGHT = 28.97
@@ -46,20 +47,25 @@ def build_scientific_proxy_profile(
     validation: ValidationResult,
     chemistry: CandidateResponse,
     quantum: QuantumEvaluationResult | None,
+    state: PlanetAtmosphereState | None = None,
 ) -> ScientificProxyProfile:
     fractions = profile.atmosphere.gas_fractions
-    mean_weight = sum(
-        max(0.0, fraction) * MOLECULAR_WEIGHTS.get(gas, EARTH_MEAN_MOLECULAR_WEIGHT)
-        for gas, fraction in fractions.items()
-    )
-    mean_weight = max(2.0, mean_weight or EARTH_MEAN_MOLECULAR_WEIGHT)
+    if state is not None:
+        mean_weight = state.mean_molecular_weight
+        scale_height_proxy = _clamp(state.scale_height_km / 8.5, 0.2, 3.0)
+    else:
+        mean_weight = sum(
+            max(0.0, fraction) * MOLECULAR_WEIGHTS.get(gas, EARTH_MEAN_MOLECULAR_WEIGHT)
+            for gas, fraction in fractions.items()
+        )
+        mean_weight = max(2.0, mean_weight or EARTH_MEAN_MOLECULAR_WEIGHT)
 
-    scale_ratio = (
-        (profile.atmosphere.temperature_k / 288.0)
-        * (EARTH_MEAN_MOLECULAR_WEIGHT / mean_weight)
-        * (9.81 / max(profile.gravity_ms2, 1.0))
-    )
-    scale_height_proxy = _clamp(scale_ratio, 0.2, 3.0)
+        scale_ratio = (
+            (profile.atmosphere.temperature_k / 288.0)
+            * (EARTH_MEAN_MOLECULAR_WEIGHT / mean_weight)
+            * (9.81 / max(profile.gravity_ms2, 1.0))
+        )
+        scale_height_proxy = _clamp(scale_ratio, 0.2, 3.0)
 
     carbon_richness_proxy = _clamp(
         fractions.get("CO2", 0.0)
@@ -74,27 +80,34 @@ def build_scientific_proxy_profile(
         0.0,
         1.0,
     )
-    oxidation_index_proxy = _clamp(
-        fractions.get("O2", 0.0)
-        + 0.45 * fractions.get("CO2", 0.0)
-        + 0.25 * fractions.get("SO2", 0.0)
-        - fractions.get("H2", 0.0)
-        - 0.8 * fractions.get("CH4", 0.0)
-        - 0.6 * fractions.get("NH3", 0.0),
-        -1.0,
-        1.0,
+    oxidation_index_proxy = (
+        _clamp(state.oxidation_reduction_proxy, -1.0, 1.0)
+        if state is not None
+        else _clamp(
+            fractions.get("O2", 0.0)
+            + 0.45 * fractions.get("CO2", 0.0)
+            + 0.25 * fractions.get("SO2", 0.0)
+            - fractions.get("H2", 0.0)
+            - 0.8 * fractions.get("CH4", 0.0)
+            - 0.6 * fractions.get("NH3", 0.0),
+            -1.0,
+            1.0,
+        )
     )
 
-    haze_seed = 0.12
-    haze_seed += 0.15 if profile.atmosphere.pressure_bar > 2.5 else 0.0
-    haze_seed += 0.12 if profile.atmosphere.pressure_bar < 0.25 else 0.0
-    haze_seed += 0.12 if profile.atmosphere.temperature_k > 380 else 0.0
-    haze_seed += 0.10 * fractions.get("CH4", 0.0)
-    haze_seed += 0.08 * fractions.get("H2O", 0.0)
-    haze_seed += 0.08 if "dense atmosphere" in chemistry.chemistry_modes else 0.0
-    haze_seed += 0.10 if "high-radiation" in chemistry.chemistry_modes else 0.0
-    haze_seed += 0.06 if any(issue.severity == "warning" for issue in validation.issues) else 0.0
-    cloud_haze_factor = _clamp(haze_seed, 0.05, 1.0)
+    if state is not None:
+        cloud_haze_factor = _clamp(state.tau_cloud / 1.25, 0.05, 1.0)
+    else:
+        haze_seed = 0.12
+        haze_seed += 0.15 if profile.atmosphere.pressure_bar > 2.5 else 0.0
+        haze_seed += 0.12 if profile.atmosphere.pressure_bar < 0.25 else 0.0
+        haze_seed += 0.12 if profile.atmosphere.temperature_k > 380 else 0.0
+        haze_seed += 0.10 * fractions.get("CH4", 0.0)
+        haze_seed += 0.08 * fractions.get("H2O", 0.0)
+        haze_seed += 0.08 if "dense atmosphere" in chemistry.chemistry_modes else 0.0
+        haze_seed += 0.10 if "high-radiation" in chemistry.chemistry_modes else 0.0
+        haze_seed += 0.06 if any(issue.severity == "warning" for issue in validation.issues) else 0.0
+        cloud_haze_factor = _clamp(haze_seed, 0.05, 1.0)
 
     visibility = 0.48
     visibility += 0.22 * _normalize(scale_height_proxy, 0.2, 3.0)

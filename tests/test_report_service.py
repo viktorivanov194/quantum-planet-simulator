@@ -1,6 +1,6 @@
 from app.models.chemistry import CandidateResponse, MoleculeCandidate, QuantumCandidateInput
+from app.models.molecular_probe import MolecularProbeResult
 from app.models.planet import AtmosphericProfile, PlanetProfile, ValidationResult
-from app.models.quantum import QuantumEvaluationResult
 from app.models.scientific import ScientificProxyProfile
 from app.models.spectrum import SpectrumMetadata, SpectrumResponse
 from app.services.report_service import build_final_report
@@ -12,7 +12,7 @@ def test_build_final_report_shape() -> None:
         validation=ValidationResult(is_valid=True, score=0.88, issues=[]),
         chemistry=_chemistry(),
         selected_candidate=_selected_candidate(),
-        quantum=_quantum(),
+        molecular_probe=_probe(),
         spectrum=_spectrum(),
         scientific=_scientific(),
     )
@@ -21,7 +21,9 @@ def test_build_final_report_shape() -> None:
     assert report.discovery_headline
     assert report.key_highlights
     assert 0.0 <= report.confidence_score <= 1.0
-    assert "observation mode" in report.chemistry_overview.lower()
+    assert "plausible contributors" in report.chemistry_overview.lower()
+    assert "retrieved abundances or detections" in report.chemistry_overview.lower()
+    assert "not used for atmospheric inference or spectral weighting" in report.molecular_probe_overview.lower()
 
 
 def test_build_final_report_handles_ambiguous_observation_mode() -> None:
@@ -30,13 +32,37 @@ def test_build_final_report_handles_ambiguous_observation_mode() -> None:
         validation=ValidationResult(is_valid=True, score=0.72, issues=[]),
         chemistry=_chemistry(),
         selected_candidate=_selected_candidate(),
-        quantum=_quantum(),
+        molecular_probe=_probe(),
         spectrum=_spectrum(),
         scientific=_scientific(observation_mode="ambiguous", clarity_mode="cloud-muted"),
     )
 
     assert "ambiguous" in report.discovery_headline.lower()
     assert any("ambigu" in note.lower() or "suppressed" in note.lower() for note in report.caution_notes)
+
+
+def test_build_final_report_avoids_detection_language() -> None:
+    report = build_final_report(
+        profile=_profile(),
+        validation=ValidationResult(is_valid=True, score=0.88, issues=[]),
+        chemistry=_chemistry(),
+        selected_candidate=_selected_candidate(),
+        molecular_probe=_probe(),
+        spectrum=_spectrum(),
+        scientific=_scientific(),
+    )
+
+    body = " ".join(
+        [
+            report.discovery_headline,
+            report.discovery_summary,
+            report.chemistry_overview,
+            report.molecular_probe_overview,
+            *report.caution_notes,
+        ]
+    ).lower()
+    assert " detected " not in f" {body} "
+    assert "retrieval" in body
 
 
 def _profile() -> PlanetProfile:
@@ -94,15 +120,22 @@ def _selected_candidate() -> QuantumCandidateInput:
     )
 
 
-def _quantum() -> QuantumEvaluationResult:
-    return QuantumEvaluationResult(
-        name="Water Vapor",
+def _probe() -> MolecularProbeResult:
+    return MolecularProbeResult(
+        molecule_name="Water Vapor",
         formula="H2O",
-        ground_state_energy_proxy=-1.58,
-        stability_score=0.83,
-        source="cached",
-        notes=["cached demo result"],
-        confidence_score=0.85,
+        probe_status="cached_reference",
+        probe_model="offline_reference",
+        live_calculation_attempted=False,
+        live_calculation_allowed=True,
+        cached_reference_allowed=True,
+        electronic_energy_proxy=-1.58,
+        reference_energy_proxy=-1.58,
+        probe_agreement=0.84,
+        provenance_label="cached_reference",
+        provenance_details=["cached demo result"],
+        educational_note="demo",
+        scientific_caveats=["demo caveat"],
     )
 
 

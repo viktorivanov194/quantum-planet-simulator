@@ -10,7 +10,7 @@ class FinalDiscoveryReport(BaseModel):
     discovery_summary: str
     planet_overview: str
     chemistry_overview: str
-    quantum_overview: str
+    molecular_probe_overview: str
     spectrum_overview: str
     key_highlights: list[str] = Field(default_factory=list)
     caution_notes: list[str] = Field(default_factory=list)
